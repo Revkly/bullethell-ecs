@@ -12,3 +12,15 @@ public struct PlayerInput : IComponentData
 {
     public float2 Move;
 }
+
+public struct PlayerHealth : IComponentData
+{
+    public float Current;
+    public float Max;
+}
+
+public struct PlayerDamageCooldown : IComponentData
+{
+    public float Cooldown;
+    public float Timer;
+}

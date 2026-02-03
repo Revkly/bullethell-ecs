@@ -29,7 +29,7 @@ public partial struct EnemySpawnSystem : ISystem
                 {
                     Position = new float3(randomPos.x, randomPos.y, 0),
                     Rotation = quaternion.identity,
-                    Scale = 0.3f
+                    Scale = 0.1f
                 });
             }
         }

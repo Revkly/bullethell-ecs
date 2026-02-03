@@ -145,7 +145,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 293100143}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc3103e029f1fba4e89f08a1ac5ddf1c, type: 3}
+  m_Script: {fileID: 11500000, guid: f4a713642b29a5c42a49955297ed4b61, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnerAuthoring
   enemyPrefab: {fileID: 8032681728911427991, guid: b40c2b66bacb3444791c4ea2a7b753e2, type: 3}
@@ -196,6 +196,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAuthoring
   moveSpeed: 5
+  maxHealth: 100
+  damageCooldown: 1
 --- !u!212 &828318626
 SpriteRenderer:
   m_ObjectHideFlags: 0
