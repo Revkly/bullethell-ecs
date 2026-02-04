@@ -27,6 +27,18 @@ public class PlayerAuthoring : MonoBehaviour
                 Cooldown = authoring.damageCooldown,
                 Timer = 0f
             });
+
+            AddComponent(entity, new Weapon
+            {
+                Damage = 10f,
+                Cooldown = 0.5f,
+                ProjectileCount = 1
+            });
+
+            AddComponent(entity, new WeaponTimer
+            {
+                Timer = 0f
+            });
         }
     }
 }
