@@ -39,6 +39,11 @@ public class PlayerAuthoring : MonoBehaviour
             {
                 Timer = 0f
             });
+
+            AddComponent(entity, new PlayerExp
+            {
+                Current = 0
+            });
         }
     }
 }

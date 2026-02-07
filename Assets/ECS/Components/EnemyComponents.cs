@@ -11,3 +11,5 @@ public struct EnemyHealth : IComponentData
 {
     public float Value;
 }
+
+public struct DeadTag : IComponentData {}

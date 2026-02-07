@@ -10,11 +10,12 @@ public partial struct EnemyDeathSystem : ISystem
         foreach (var (health, entity) in
             SystemAPI.Query<RefRO<EnemyHealth>>()
                      .WithAll<EnemyTag>()
+                     .WithNone<DeadTag>()
                      .WithEntityAccess())
         {
             if (health.ValueRO.Value <= 0f)
             {
-                ecb.DestroyEntity(entity);
+                ecb.AddComponent<DeadTag>(entity);
             }
         }
 

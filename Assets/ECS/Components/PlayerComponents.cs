@@ -24,3 +24,8 @@ public struct PlayerDamageCooldown : IComponentData
     public float Cooldown;
     public float Timer;
 }
+
+public struct PlayerExp : IComponentData
+{
+    public int Current;
+}
