@@ -1,6 +1,6 @@
 using Unity.Entities;
-using Unity.Mathematics;
 using Unity.Transforms;
+using Unity.Mathematics;
 
 public partial struct ProjectileMoveSystem : ISystem
 {
@@ -8,16 +8,11 @@ public partial struct ProjectileMoveSystem : ISystem
     {
         float dt = SystemAPI.Time.DeltaTime;
 
-        foreach (var (transform, projectile) in
+        foreach (var (transform, data) in
             SystemAPI.Query<RefRW<LocalTransform>, RefRO<ProjectileData>>())
         {
-            float3 move = new float3(
-                projectile.ValueRO.Direction.x,
-                projectile.ValueRO.Direction.y,
-                0f);
-
-            transform.ValueRW.Position += move * projectile.ValueRO.Speed * dt;
-            transform.ValueRW.Scale = projectile.ValueRO.Scale;
+            transform.ValueRW.Position +=
+                new float3(data.ValueRO.Direction, 0f) * data.ValueRO.Speed * dt;
         }
     }
 }

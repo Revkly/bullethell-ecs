@@ -28,22 +28,38 @@ public class PlayerAuthoring : MonoBehaviour
                 Timer = 0f
             });
 
-            AddComponent(entity, new Weapon
-            {
-                Damage = 10f,
-                Cooldown = 0.5f,
-                ProjectileCount = 1
-            });
+            // AddComponent(entity, new Weapon
+            // {
+            //     Damage = 10f,
+            //     Cooldown = 0.5f,
+            //     ProjectileCount = 1
+            // });
 
-            AddComponent(entity, new WeaponTimer
-            {
-                Timer = 0f
-            });
+            // AddComponent(entity, new WeaponTimer
+            // {
+            //     Timer = 0f
+            // });
 
             AddComponent(entity, new PlayerExp
             {
                 Current = 0
             });
+
+            AddComponent(entity, new PlayerLevel
+            {
+                Value = 1
+            });
+
+            AddComponent(entity, new ExpToNextLevel
+            {
+                Value = 10
+            });
+
+            AddComponent(entity, new WeaponSlot
+            {
+                MaxSlot = 6
+            });
+            AddBuffer<OwnedWeapon>(entity);
         }
     }
 }

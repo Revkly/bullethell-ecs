@@ -29,3 +29,14 @@ public struct PlayerExp : IComponentData
 {
     public int Current;
 }
+
+public struct PlayerLevel : IComponentData
+{
+    public int Value;
+}
+
+public struct ExpToNextLevel : IComponentData
+{
+    public int Value;
+}
+

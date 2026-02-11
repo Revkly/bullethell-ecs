@@ -1,6 +1,6 @@
 using Unity.Entities;
-using Unity.Mathematics;
 using Unity.Transforms;
+using Unity.Mathematics;
 using Unity.Collections;
 
 public partial struct ProjectileHitSystem : ISystem
@@ -13,6 +13,7 @@ public partial struct ProjectileHitSystem : ISystem
             SystemAPI.Query<
                 RefRO<LocalTransform>,
                 RefRO<ProjectileDamage>>()
+            .WithAll<ProjectileTag>()
             .WithEntityAccess())
         {
             foreach (var (enemyTransform, enemyHealth, enemyEntity) in
@@ -20,22 +21,18 @@ public partial struct ProjectileHitSystem : ISystem
                     RefRO<LocalTransform>,
                     RefRW<EnemyHealth>>()
                 .WithAll<EnemyTag>()
+                .WithNone<DeadTag>()
                 .WithEntityAccess())
             {
                 float dist = math.distance(
                     projTransform.ValueRO.Position,
-                    enemyTransform.ValueRO.Position
-                );
+                    enemyTransform.ValueRO.Position);
 
                 if (dist < 0.5f)
                 {
-                    // Damage enemy
                     enemyHealth.ValueRW.Value -= damage.ValueRO.Value;
-
-                    // Destroy projectile
                     ecb.DestroyEntity(projEntity);
-
-                    break; // projectile hanya hit satu enemy
+                    break;
                 }
             }
         }
