@@ -14,6 +14,7 @@ public partial struct LevelUpSystem : ISystem
                 RefRW<PlayerLevel>,
                 RefRW<ExpToNextLevel>>()
             .WithAll<PlayerTag>()
+            .WithNone<PendingUpgrade>()
             .WithEntityAccess())
         {
             if (exp.ValueRO.Current < nextExp.ValueRO.Value)
@@ -23,12 +24,8 @@ public partial struct LevelUpSystem : ISystem
             level.ValueRW.Value += 1;
             nextExp.ValueRW.Value += 5;
 
-            ecb.AddComponent(entity, new PendingUpgrade
-            {
-                OptionA = UpgradeType.DamageUp,
-                OptionB = UpgradeType.AttackSpeedUp,
-                OptionC = UpgradeType.MoveSpeedUp
-            });
+            // Cukup tandai bahwa player siap generate upgrade
+            ecb.AddComponent<PendingUpgrade>(entity);
 
             Debug.Log($"LEVEL UP! Level {level.ValueRO.Value}");
         }

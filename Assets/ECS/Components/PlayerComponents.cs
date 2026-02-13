@@ -40,3 +40,8 @@ public struct ExpToNextLevel : IComponentData
     public int Value;
 }
 
+public struct SelectedUpgrade : IComponentData
+{
+    public WeaponType Value;
+}
+
