@@ -6,81 +6,82 @@ public partial struct GenerateUpgradeOptionsSystem : ISystem
 {
     public void OnUpdate(ref SystemState state)
     {
-        var ecb = new EntityCommandBuffer(Allocator.Temp);
+        var ecbSingleton =
+            SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+        var ecb =
+            ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
         var pool = SystemAPI.GetSingletonBuffer<WeaponPoolElement>();
 
-        foreach (var (exp, level, slot, buffer, entity) in
+        foreach (var (slot, buffer, entity) in
             SystemAPI.Query<
-                RefRO<PlayerExp>,
-                RefRO<PlayerLevel>,
                 RefRO<WeaponSlot>,
                 DynamicBuffer<OwnedWeapon>>()
-            .WithAll<PlayerTag>()
+            .WithAll<PlayerTag, LevelUpEvent>()
             .WithNone<PendingUpgrade>()
+            .WithNone<SelectedUpgrade>()
             .WithEntityAccess())
         {
-            if (!state.EntityManager.HasComponent<PlayerLevel>(entity))
-                continue;
+            var validWeapons = new NativeList<WeaponType>(Allocator.Temp);
 
-            if (!state.EntityManager.HasComponent<PendingUpgrade>(entity))
+            foreach (var w in pool)
             {
-                // Hanya generate jika level up sudah terjadi
-                if (!state.EntityManager.HasComponent<PendingUpgrade>(entity) &&
-                    !state.EntityManager.HasComponent<SelectedUpgrade>(entity))
+                bool owned = false;
+                int currentLevel = 0;
+
+                foreach (var ownedWeapon in buffer)
                 {
-                    var validWeapons = new NativeList<WeaponType>(Allocator.Temp);
-
-                    foreach (var w in pool)
-                    {
-                        bool owned = false;
-                        int currentLevel = 0;
-
-                        foreach (var ownedWeapon in buffer)
-                        {
-                            var type = state.EntityManager
-                                .GetComponentData<WeaponTypeComponent>(ownedWeapon.WeaponEntity);
-
-                            if (type.Value == w.Value)
-                            {
-                                owned = true;
-                                currentLevel = state.EntityManager
-                                    .GetComponentData<WeaponLevel>(ownedWeapon.WeaponEntity).Value;
-                                break;
-                            }
-                        }
-
-                        if (owned && currentLevel < 3)
-                            validWeapons.Add(w.Value);
-                        else if (!owned && buffer.Length < slot.ValueRO.MaxSlot)
-                            validWeapons.Add(w.Value);
-                    }
-
-                    if (validWeapons.Length < 3)
+                    if (!state.EntityManager.Exists(ownedWeapon.WeaponEntity))
                         continue;
 
-                    WeaponType a = validWeapons[Random.Range(0, validWeapons.Length)];
-                    WeaponType b;
-                    WeaponType c;
+                    var type = state.EntityManager
+                        .GetComponentData<WeaponTypeComponent>(ownedWeapon.WeaponEntity);
 
-                    do { b = validWeapons[Random.Range(0, validWeapons.Length)]; }
-                    while (b == a);
-
-                    do { c = validWeapons[Random.Range(0, validWeapons.Length)]; }
-                    while (c == a || c == b);
-
-                    ecb.AddComponent(entity, new PendingUpgrade
+                    if (type.Value == w.Value)
                     {
-                        OptionA = a,
-                        OptionB = b,
-                        OptionC = c
-                    });
-
-                    validWeapons.Dispose();
+                        owned = true;
+                        currentLevel = state.EntityManager
+                            .GetComponentData<WeaponLevel>(ownedWeapon.WeaponEntity).Value;
+                        break;
+                    }
                 }
-            }
-        }
 
-        ecb.Playback(state.EntityManager);
+                if (owned && currentLevel < 3)
+                    validWeapons.Add(w.Value);
+                else if (!owned && buffer.Length < slot.ValueRO.MaxSlot)
+                    validWeapons.Add(w.Value);
+            }
+
+            if (validWeapons.Length == 0)
+            {
+                validWeapons.Dispose();
+                ecb.RemoveComponent<LevelUpEvent>(entity);
+                continue;
+            }
+
+            // Shuffle
+            for (int i = 0; i < validWeapons.Length; i++)
+            {
+                int rand = Random.Range(i, validWeapons.Length);
+                var temp = validWeapons[i];
+                validWeapons[i] = validWeapons[rand];
+                validWeapons[rand] = temp;
+            }
+
+            WeaponType a = validWeapons[0];
+            WeaponType b = validWeapons.Length > 1 ? validWeapons[1] : validWeapons[0];
+            WeaponType c = validWeapons.Length > 2 ? validWeapons[2] : validWeapons[0];
+
+            ecb.AddComponent(entity, new PendingUpgrade
+            {
+                OptionA = a,
+                OptionB = b,
+                OptionC = c
+            });
+
+            ecb.RemoveComponent<LevelUpEvent>(entity);
+
+            validWeapons.Dispose();
+        }
     }
 }

@@ -1,7 +1,6 @@
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-using Unity.Collections;
 
 public partial struct MagicWandSystem : ISystem
 {
@@ -9,31 +8,31 @@ public partial struct MagicWandSystem : ISystem
     {
         float dt = SystemAPI.Time.DeltaTime;
 
-        var ecb = new EntityCommandBuffer(Allocator.Temp);
+        var ecbSingleton =
+            SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+        var ecb =
+            ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
-        // Loop semua weapon entity bertipe MagicWand
-        foreach (var (cooldown, owner, level, entity) in
+        foreach (var (cooldown, owner, level, weaponEntity) in
             SystemAPI.Query<
                 RefRW<WeaponCooldown>,
                 RefRO<WeaponOwner>,
                 RefRO<WeaponLevel>>()
-            .WithAll<Weapon, WeaponTypeComponent>()
+            .WithAll<Weapon>()
             .WithEntityAccess())
         {
-            // cek type
-            var type = state.EntityManager.GetComponentData<WeaponTypeComponent>(entity);
+            var type = state.EntityManager
+                .GetComponentData<WeaponTypeComponent>(weaponEntity);
+
             if (type.Value != WeaponType.MagicWand)
                 continue;
 
-            // cooldown tick
             cooldown.ValueRW.Timer -= dt;
             if (cooldown.ValueRO.Timer > 0f)
                 continue;
 
-            // reset cooldown
             cooldown.ValueRW.Timer = cooldown.ValueRO.Value;
 
-            // ambil posisi player
             if (!state.EntityManager.Exists(owner.ValueRO.Player))
                 continue;
 
@@ -41,17 +40,21 @@ public partial struct MagicWandSystem : ISystem
                 state.EntityManager.GetComponentData<LocalTransform>(
                     owner.ValueRO.Player).Position;
 
-            // cari enemy terdekat
+            // ===============================
+            // CARI ENEMY TERDEKAT
+            // ===============================
+
             Entity nearestEnemy = Entity.Null;
             float minDist = float.MaxValue;
 
             foreach (var (enemyTransform, enemyEntity) in
                 SystemAPI.Query<RefRO<LocalTransform>>()
-                         .WithAll<EnemyTag>()
-                         .WithNone<DeadTag>()
-                         .WithEntityAccess())
+                    .WithAll<EnemyTag>()
+                    .WithNone<DeadTag>()
+                    .WithEntityAccess())
             {
                 float dist = math.distance(playerPos, enemyTransform.ValueRO.Position);
+
                 if (dist < minDist)
                 {
                     minDist = dist;
@@ -66,12 +69,15 @@ public partial struct MagicWandSystem : ISystem
                 state.EntityManager.GetComponentData<LocalTransform>(
                     nearestEnemy).Position;
 
-            float3 dir = math.normalize(enemyPos - playerPos);
+            float3 dir3 = math.normalize(enemyPos - playerPos);
+            float2 dir = new float2(dir3.x, dir3.y);
 
-            // spawn projectile
+            // ===============================
+            // SPAWN PROJECTILE
+            // ===============================
+
             Entity proj = ecb.Instantiate(
-                SystemAPI.GetSingleton<ProjectilePrefab>().Value
-            );
+                SystemAPI.GetSingleton<ProjectilePrefab>().Value);
 
             ecb.SetComponent(proj, new LocalTransform
             {
@@ -83,12 +89,12 @@ public partial struct MagicWandSystem : ISystem
             ecb.AddComponent(proj, new ProjectileData
             {
                 Speed = 8f,
-                Direction = new float2(dir.x, dir.y)
+                Direction = dir
             });
 
             ecb.AddComponent(proj, new ProjectileDamage
             {
-                Value = 5f + level.ValueRO.Value * 2f
+                Value = 8f + level.ValueRO.Value * 2f
             });
 
             ecb.AddComponent(proj, new ProjectileLifetime
@@ -96,7 +102,5 @@ public partial struct MagicWandSystem : ISystem
                 Value = 2f
             });
         }
-
-        ecb.Playback(state.EntityManager);
     }
 }

@@ -1,11 +1,13 @@
 using Unity.Entities;
-using Unity.Collections;
 
 public partial struct EnemyDeathSystem : ISystem
 {
     public void OnUpdate(ref SystemState state)
     {
-        var ecb = new EntityCommandBuffer(Allocator.Temp);
+        var ecbSingleton =
+            SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+        var ecb =
+            ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
         foreach (var (health, entity) in
             SystemAPI.Query<RefRO<EnemyHealth>>()
@@ -18,7 +20,5 @@ public partial struct EnemyDeathSystem : ISystem
                 ecb.AddComponent<DeadTag>(entity);
             }
         }
-
-        ecb.Playback(state.EntityManager);
     }
 }

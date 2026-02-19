@@ -1,5 +1,4 @@
 using Unity.Entities;
-using Unity.Collections;
 using UnityEngine;
 
 public partial struct GameStartWeaponSystem : ISystem
@@ -15,7 +14,10 @@ public partial struct GameStartWeaponSystem : ISystem
         var pool = SystemAPI.GetSingletonBuffer<WeaponPoolElement>();
         if (pool.Length == 0) return;
 
-        var ecb = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
+        var ecbSingleton =
+            SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+        var ecb =
+            ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
         foreach (var (slot, buffer, player) in
             SystemAPI.Query<
@@ -35,22 +37,14 @@ public partial struct GameStartWeaponSystem : ISystem
             ecb.AddComponent<Weapon>(weapon);
             ecb.AddComponent(weapon, new WeaponOwner { Player = player });
             ecb.AddComponent(weapon, new WeaponLevel { Value = 1 });
-            ecb.AddComponent(weapon, new WeaponCooldown
-            {
-                Value = 1f,
-                Timer = 0f
-            });
-            ecb.AddComponent(weapon, new WeaponTypeComponent
-            {
-                Value = startWeapon
-            });
+            ecb.AddComponent(weapon, new WeaponCooldown { Value = 1f, Timer = 0f });
+            ecb.AddComponent(weapon, new WeaponTypeComponent { Value = startWeapon });
 
-            buffer.Add(new OwnedWeapon
+            // WAJIB pakai AppendToBuffer
+            ecb.AppendToBuffer(player, new OwnedWeapon
             {
                 WeaponEntity = weapon
             });
         }
-
-        ecb.Playback(state.EntityManager);
     }
 }

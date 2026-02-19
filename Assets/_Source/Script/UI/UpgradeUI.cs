@@ -6,6 +6,7 @@ using Unity.Entities;
 public class UpgradeUI : MonoBehaviour
 {
     public GameObject panel;
+
     public Button buttonA;
     public Button buttonB;
     public Button buttonC;
@@ -14,63 +15,102 @@ public class UpgradeUI : MonoBehaviour
     public TMP_Text textB;
     public TMP_Text textC;
 
-    EntityManager entityManager;
-    Entity playerEntity;
+    EntityManager em;
+    Entity player;
+
+    bool isOpen = false;
 
     void Start()
     {
-        entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+        em = World.DefaultGameObjectInjectionWorld.EntityManager;
 
-        foreach (var entity in entityManager.GetAllEntities())
+        foreach (var e in em.GetAllEntities())
         {
-            if (entityManager.HasComponent<PlayerTag>(entity))
+            if (em.HasComponent<PlayerTag>(e))
             {
-                playerEntity = entity;
+                player = e;
                 break;
             }
         }
 
         panel.SetActive(false);
+
+        buttonA.onClick.AddListener(() => Select(0));
+        buttonB.onClick.AddListener(() => Select(1));
+        buttonC.onClick.AddListener(() => Select(2));
     }
 
     void Update()
     {
-        if (!entityManager.Exists(playerEntity))
+        if (!em.Exists(player))
             return;
 
-        if (entityManager.HasComponent<PendingUpgrade>(playerEntity))
+        bool hasUpgrade = em.HasComponent<PendingUpgrade>(player);
+
+        if (hasUpgrade && !isOpen)
         {
-            var upgrade = entityManager.GetComponentData<PendingUpgrade>(playerEntity);
-
-            textA.text = upgrade.OptionA.ToString();
-            textB.text = upgrade.OptionB.ToString();
-            textC.text = upgrade.OptionC.ToString();
-
-            panel.SetActive(true);
-
-            buttonA.onClick.RemoveAllListeners();
-            buttonB.onClick.RemoveAllListeners();
-            buttonC.onClick.RemoveAllListeners();
-
-            buttonA.onClick.AddListener(() => Select(upgrade.OptionA));
-            buttonB.onClick.AddListener(() => Select(upgrade.OptionB));
-            buttonC.onClick.AddListener(() => Select(upgrade.OptionC));
+            Open();
         }
-        else
+        else if (!hasUpgrade && isOpen)
         {
-            panel.SetActive(false);
+            Close();
         }
     }
 
-    void Select(WeaponType type)
+    void Open()
     {
-        if (!entityManager.HasComponent<SelectedUpgrade>(playerEntity))
+        var upgrade = em.GetComponentData<PendingUpgrade>(player);
+
+        textA.text = GetDisplay(upgrade.OptionA);
+        textB.text = GetDisplay(upgrade.OptionB);
+        textC.text = GetDisplay(upgrade.OptionC);
+
+        panel.SetActive(true);
+        Time.timeScale = 0f;
+        isOpen = true;
+    }
+
+    void Close()
+    {
+        panel.SetActive(false);
+        Time.timeScale = 1f;
+        isOpen = false;
+    }
+
+    string GetDisplay(WeaponType type)
+    {
+        var buffer = em.GetBuffer<OwnedWeapon>(player);
+
+        foreach (var owned in buffer)
         {
-            entityManager.AddComponentData(playerEntity,
-                new SelectedUpgrade { Value = type });
+            var weaponType = em.GetComponentData<WeaponTypeComponent>(owned.WeaponEntity);
+
+            if (weaponType.Value == type)
+            {
+                int level = em.GetComponentData<WeaponLevel>(owned.WeaponEntity).Value;
+                int nextLevel = Mathf.Min(level + 1, 3);
+                return type + "  Lv." + nextLevel;
+            }
         }
 
-        entityManager.RemoveComponent<PendingUpgrade>(playerEntity);
-        panel.SetActive(false);
+        return type + "  Lv.1";
+    }
+
+    void Select(int index)
+    {
+        var upgrade = em.GetComponentData<PendingUpgrade>(player);
+
+        WeaponType chosen = upgrade.OptionA;
+
+        if (index == 1) chosen = upgrade.OptionB;
+        if (index == 2) chosen = upgrade.OptionC;
+
+        if (!em.HasComponent<SelectedUpgrade>(player))
+        {
+            em.AddComponentData(player,
+                new SelectedUpgrade { Value = chosen });
+        }
+
+        em.RemoveComponent<PendingUpgrade>(player);
     }
 }

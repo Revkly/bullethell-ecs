@@ -1,12 +1,14 @@
 using Unity.Entities;
-using Unity.Collections;
 using UnityEngine;
 
 public partial struct LevelUpSystem : ISystem
 {
     public void OnUpdate(ref SystemState state)
     {
-        var ecb = new EntityCommandBuffer(Allocator.Temp);
+        var ecbSingleton =
+            SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+        var ecb =
+            ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
         foreach (var (exp, level, nextExp, entity) in
             SystemAPI.Query<
@@ -14,7 +16,7 @@ public partial struct LevelUpSystem : ISystem
                 RefRW<PlayerLevel>,
                 RefRW<ExpToNextLevel>>()
             .WithAll<PlayerTag>()
-            .WithNone<PendingUpgrade>()
+            .WithNone<LevelUpEvent>()
             .WithEntityAccess())
         {
             if (exp.ValueRO.Current < nextExp.ValueRO.Value)
@@ -24,12 +26,9 @@ public partial struct LevelUpSystem : ISystem
             level.ValueRW.Value += 1;
             nextExp.ValueRW.Value += 5;
 
-            // Cukup tandai bahwa player siap generate upgrade
-            ecb.AddComponent<PendingUpgrade>(entity);
+            ecb.AddComponent<LevelUpEvent>(entity);
 
             Debug.Log($"LEVEL UP! Level {level.ValueRO.Value}");
         }
-
-        ecb.Playback(state.EntityManager);
     }
 }

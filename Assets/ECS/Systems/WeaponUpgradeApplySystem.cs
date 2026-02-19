@@ -1,13 +1,16 @@
 using Unity.Entities;
-using Unity.Collections;
 
 public partial struct WeaponUpgradeApplySystem : ISystem
 {
     public void OnUpdate(ref SystemState state)
     {
-        var ecb = new EntityCommandBuffer(Allocator.Temp);
+        var ecbSingleton =
+            SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
 
-        foreach (var (selected, slot, buffer, entity) in
+        var ecb =
+            ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
+
+        foreach (var (selected, slot, buffer, player) in
             SystemAPI.Query<
                 RefRO<SelectedUpgrade>,
                 RefRO<WeaponSlot>,
@@ -16,10 +19,14 @@ public partial struct WeaponUpgradeApplySystem : ISystem
             .WithEntityAccess())
         {
             WeaponType chosen = selected.ValueRO.Value;
-            bool found = false;
+
+            bool alreadyOwned = false;
 
             foreach (var owned in buffer)
             {
+                if (!state.EntityManager.Exists(owned.WeaponEntity))
+                    continue;
+
                 var type = state.EntityManager
                     .GetComponentData<WeaponTypeComponent>(owned.WeaponEntity);
 
@@ -31,30 +38,40 @@ public partial struct WeaponUpgradeApplySystem : ISystem
                     if (level.Value < 3)
                     {
                         level.Value += 1;
-                        state.EntityManager.SetComponentData(owned.WeaponEntity, level);
+                        state.EntityManager
+                            .SetComponentData(owned.WeaponEntity, level);
                     }
 
-                    found = true;
+                    alreadyOwned = true;
                     break;
                 }
             }
 
-            if (!found && buffer.Length < slot.ValueRO.MaxSlot)
+            // Jika belum punya dan slot masih ada → buat weapon baru
+            if (!alreadyOwned && buffer.Length < slot.ValueRO.MaxSlot)
             {
                 Entity weapon = ecb.CreateEntity();
 
                 ecb.AddComponent<Weapon>(weapon);
-                ecb.AddComponent(weapon, new WeaponOwner { Player = entity });
+                ecb.AddComponent(weapon, new WeaponOwner { Player = player });
                 ecb.AddComponent(weapon, new WeaponLevel { Value = 1 });
-                ecb.AddComponent(weapon, new WeaponCooldown { Value = 1f, Timer = 0f });
-                ecb.AddComponent(weapon, new WeaponTypeComponent { Value = chosen });
+                ecb.AddComponent(weapon, new WeaponCooldown
+                {
+                    Value = 1f,
+                    Timer = 0f
+                });
+                ecb.AddComponent(weapon, new WeaponTypeComponent
+                {
+                    Value = chosen
+                });
 
-                buffer.Add(new OwnedWeapon { WeaponEntity = weapon });
+                ecb.AppendToBuffer(player, new OwnedWeapon
+                {
+                    WeaponEntity = weapon
+                });
             }
 
-            ecb.RemoveComponent<SelectedUpgrade>(entity);
+            ecb.RemoveComponent<SelectedUpgrade>(player);
         }
-
-        ecb.Playback(state.EntityManager);
     }
 }
