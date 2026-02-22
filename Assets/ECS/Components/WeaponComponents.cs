@@ -1,4 +1,6 @@
 using Unity.Entities;
+using Unity.Mathematics;
+
 
 public struct Weapon : IComponentData {}
 
@@ -35,4 +37,16 @@ public enum WeaponType
 public struct WeaponTypeComponent : IComponentData
 {
     public WeaponType Value;
+}
+
+public struct WeaponSlot : IComponentData
+{
+    public int MaxSlot;
+}
+
+public struct EnemyKnockback : IComponentData
+{
+    public float2 Direction;
+    public float Force;
+    public float Timer;
 }
