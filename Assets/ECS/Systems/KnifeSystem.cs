@@ -14,18 +14,17 @@ public partial struct KnifeSystem : ISystem
         var ecb =
             ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
-        foreach (var (cooldown, owner, level, prefab, entity) in
+        foreach (var (cooldown, owner, level, prefab, type, weaponEntity) in
             SystemAPI.Query<
                 RefRW<WeaponCooldown>,
                 RefRO<WeaponOwner>,
                 RefRO<WeaponLevel>,
-                RefRO<WeaponProjectilePrefab>>()
+                RefRO<WeaponProjectilePrefab>,
+                RefRO<WeaponTypeComponent>>()
             .WithAll<Weapon>()
-            .WithAll<WeaponTypeComponent>()
             .WithEntityAccess())
         {
-            var type = state.EntityManager.GetComponentData<WeaponTypeComponent>(entity);
-            if (type.Value != WeaponType.Knife)
+            if (type.ValueRO.Value != WeaponType.Knife)
                 continue;
 
             cooldown.ValueRW.Timer -= dt;
@@ -91,6 +90,9 @@ public partial struct KnifeSystem : ISystem
                 {
                     Value = 0.6f
                 });
+
+                // 🔥 Tandai ini sebagai Knife projectile
+                ecb.AddComponent<KnifeTag>(proj);
             }
         }
     }

@@ -281,6 +281,7 @@ GameObject:
   m_Component:
   - component: {fileID: 952074535}
   - component: {fileID: 952074531}
+  - component: {fileID: 952074536}
   m_Layer: 0
   m_Name: WeaponPoolObject
   m_TagString: Untagged
@@ -300,7 +301,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67d41c95a79768d429f09d64ecbf4aae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponPoolAuthoring
-  availableWeapons: 03000000
+  availableWeapons: 00000000010000000200000003000000
 --- !u!4 &952074535
 Transform:
   m_ObjectHideFlags: 0
@@ -316,6 +317,27 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &952074536
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 952074530}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af0da05e49f9aa34f98e28f631101009, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponPrefabRegistryAuthoring
+  weapons:
+  - type: 3
+    prefab: {fileID: 4685545255883661713, guid: da305442062cc8545b13da1db82b267d, type: 3}
+  - type: 3
+    prefab: {fileID: 4685545255883661713, guid: da305442062cc8545b13da1db82b267d, type: 3}
+  - type: 3
+    prefab: {fileID: 4685545255883661713, guid: da305442062cc8545b13da1db82b267d, type: 3}
+  - type: 3
+    prefab: {fileID: 4685545255883661713, guid: da305442062cc8545b13da1db82b267d, type: 3}
 --- !u!1 &1122694437
 GameObject:
   m_ObjectHideFlags: 0
@@ -361,65 +383,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2128012065
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2128012070}
-  - component: {fileID: 2128012067}
-  - component: {fileID: 2128012071}
-  m_Layer: 0
-  m_Name: ProjectilePrefabObject
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &2128012067
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2128012065}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 88fafe0fd604bcb4eb69479be58253c2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ProjectilePrefabAuthoring
-  projectilePrefab: {fileID: 8944846338884730423, guid: 7ea2f4e0d16500340baf5ec358a0eaaf, type: 3}
---- !u!4 &2128012070
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2128012065}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2128012071
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2128012065}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 154efddc071ae774d9a27b4010970cc2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KnifeProjectilePrefabAuthoring
-  knifePrefab: {fileID: 4685545255883661713, guid: da305442062cc8545b13da1db82b267d, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -427,5 +390,4 @@ SceneRoots:
   - {fileID: 828318627}
   - {fileID: 750659755}
   - {fileID: 1122694442}
-  - {fileID: 2128012070}
   - {fileID: 952074535}

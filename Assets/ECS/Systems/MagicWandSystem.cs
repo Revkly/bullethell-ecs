@@ -10,21 +10,20 @@ public partial struct MagicWandSystem : ISystem
 
         var ecbSingleton =
             SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+
         var ecb =
             ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
-        foreach (var (cooldown, owner, level, weaponEntity) in
+        foreach (var (cooldown, owner, level, prefab, type) in
             SystemAPI.Query<
                 RefRW<WeaponCooldown>,
                 RefRO<WeaponOwner>,
-                RefRO<WeaponLevel>>()
-            .WithAll<Weapon>()
-            .WithEntityAccess())
+                RefRO<WeaponLevel>,
+                RefRO<WeaponProjectilePrefab>,
+                RefRO<WeaponTypeComponent>>()
+            .WithAll<Weapon>())
         {
-            var type = state.EntityManager
-                .GetComponentData<WeaponTypeComponent>(weaponEntity);
-
-            if (type.Value != WeaponType.MagicWand)
+            if (type.ValueRO.Value != WeaponType.MagicWand)
                 continue;
 
             cooldown.ValueRW.Timer -= dt;
@@ -37,12 +36,11 @@ public partial struct MagicWandSystem : ISystem
                 continue;
 
             float3 playerPos =
-                state.EntityManager.GetComponentData<LocalTransform>(
-                    owner.ValueRO.Player).Position;
+                state.EntityManager
+                    .GetComponentData<LocalTransform>(owner.ValueRO.Player)
+                    .Position;
 
-            // ===============================
-            // CARI ENEMY TERDEKAT
-            // ===============================
+            // ===== CARI ENEMY TERDEKAT =====
 
             Entity nearestEnemy = Entity.Null;
             float minDist = float.MaxValue;
@@ -66,18 +64,16 @@ public partial struct MagicWandSystem : ISystem
                 continue;
 
             float3 enemyPos =
-                state.EntityManager.GetComponentData<LocalTransform>(
-                    nearestEnemy).Position;
+                state.EntityManager
+                    .GetComponentData<LocalTransform>(nearestEnemy)
+                    .Position;
 
             float3 dir3 = math.normalize(enemyPos - playerPos);
             float2 dir = new float2(dir3.x, dir3.y);
 
-            // ===============================
-            // SPAWN PROJECTILE
-            // ===============================
+            // ===== SPAWN PROJECTILE =====
 
-            Entity proj = ecb.Instantiate(
-                SystemAPI.GetSingleton<ProjectilePrefab>().Value);
+            Entity proj = ecb.Instantiate(prefab.ValueRO.Value);
 
             ecb.SetComponent(proj, new LocalTransform
             {

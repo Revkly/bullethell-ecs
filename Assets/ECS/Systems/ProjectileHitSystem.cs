@@ -20,36 +20,62 @@ public partial struct ProjectileHitSystem : ISystem
             .WithNone<ProjectileHit>()
             .WithEntityAccess())
         {
-            foreach (var (enemyTransform, enemyHealth, enemyEntity) in
-                SystemAPI.Query<
-                    RefRO<LocalTransform>,
-                    RefRW<EnemyHealth>>()
-                .WithAll<EnemyTag>()
-                .WithNone<DeadTag>()
-                .WithEntityAccess())
-            {
-                float dist = math.distance(
-                    projTransform.ValueRO.Position,
-                    enemyTransform.ValueRO.Position);
+            bool isKnife =
+                state.EntityManager.HasComponent<KnifeTag>(projEntity);
 
-                if (dist < 0.5f)
+            if (isKnife)
+            {
+                // 🔥 KNIFE: damage semua enemy yang bersentuhan
+                foreach (var (enemyTransform, enemyHealth) in
+                    SystemAPI.Query<
+                        RefRO<LocalTransform>,
+                        RefRW<EnemyHealth>>()
+                    .WithAll<EnemyTag>()
+                    .WithNone<DeadTag>())
                 {
-                    // Jika projectile tidak punya explosion → direct damage
-                    if (!state.EntityManager.HasComponent<ExplosionData>(projEntity))
+                    float dist = math.distance(
+                        projTransform.ValueRO.Position,
+                        enemyTransform.ValueRO.Position);
+
+                    if (dist < 0.5f)
                     {
                         enemyHealth.ValueRW.Value -= damage.ValueRO.Value;
-                        ecb.DestroyEntity(projEntity);
+                        // TIDAK destroy projectile
                     }
-                    else
-                    {
-                        // Tandai untuk explosion system
-                        ecb.AddComponent(projEntity, new ProjectileHit
-                        {
-                            HitEntity = enemyEntity
-                        });
-                    }
+                }
+            }
+            else
+            {
+                // 🔹 WEAPON LAIN (MagicWand, FireWand, dll)
+                foreach (var (enemyTransform, enemyHealth, enemyEntity) in
+                    SystemAPI.Query<
+                        RefRO<LocalTransform>,
+                        RefRW<EnemyHealth>>()
+                    .WithAll<EnemyTag>()
+                    .WithNone<DeadTag>()
+                    .WithEntityAccess())
+                {
+                    float dist = math.distance(
+                        projTransform.ValueRO.Position,
+                        enemyTransform.ValueRO.Position);
 
-                    break;
+                    if (dist < 0.5f)
+                    {
+                        if (!state.EntityManager.HasComponent<ExplosionData>(projEntity))
+                        {
+                            enemyHealth.ValueRW.Value -= damage.ValueRO.Value;
+                            ecb.DestroyEntity(projEntity);
+                        }
+                        else
+                        {
+                            ecb.AddComponent(projEntity, new ProjectileHit
+                            {
+                                HitEntity = enemyEntity
+                            });
+                        }
+
+                        break;
+                    }
                 }
             }
         }

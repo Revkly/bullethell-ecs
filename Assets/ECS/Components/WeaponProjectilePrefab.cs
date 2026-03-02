@@ -11,7 +11,4 @@ public struct WeaponPrefabRegistry : IComponentData
     public Entity Knife;
 }
 
-// public struct KnifePierce : IComponentData
-// {
-//     public float Radius;
-// }
+public struct KnifeTag : IComponentData {}

@@ -10,21 +10,20 @@ public partial struct FireWandSystem : ISystem
 
         var ecbSingleton =
             SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+
         var ecb =
             ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
-        foreach (var (cooldown, owner, level, entity) in
+        foreach (var (cooldown, owner, level, prefab, type) in
             SystemAPI.Query<
                 RefRW<WeaponCooldown>,
                 RefRO<WeaponOwner>,
-                RefRO<WeaponLevel>>()
-            .WithAll<Weapon>()
-            .WithEntityAccess())
+                RefRO<WeaponLevel>,
+                RefRO<WeaponProjectilePrefab>,
+                RefRO<WeaponTypeComponent>>()
+            .WithAll<Weapon>())
         {
-            var type = state.EntityManager
-                .GetComponentData<WeaponTypeComponent>(entity);
-
-            if (type.Value != WeaponType.FireWand)
+            if (type.ValueRO.Value != WeaponType.FireWand)
                 continue;
 
             cooldown.ValueRW.Timer -= dt;
@@ -38,39 +37,43 @@ public partial struct FireWandSystem : ISystem
 
             float3 playerPos =
                 state.EntityManager
-                .GetComponentData<LocalTransform>(
-                    owner.ValueRO.Player).Position;
+                    .GetComponentData<LocalTransform>(owner.ValueRO.Player)
+                    .Position;
 
-            Entity nearest = Entity.Null;
+            // ===== CARI ENEMY TERDEKAT =====
+
+            Entity nearestEnemy = Entity.Null;
             float minDist = float.MaxValue;
 
             foreach (var (enemyTransform, enemyEntity) in
                 SystemAPI.Query<RefRO<LocalTransform>>()
-                .WithAll<EnemyTag>()
-                .WithNone<DeadTag>()
-                .WithEntityAccess())
+                    .WithAll<EnemyTag>()
+                    .WithNone<DeadTag>()
+                    .WithEntityAccess())
             {
                 float dist = math.distance(playerPos, enemyTransform.ValueRO.Position);
 
                 if (dist < minDist)
                 {
                     minDist = dist;
-                    nearest = enemyEntity;
+                    nearestEnemy = enemyEntity;
                 }
             }
 
-            if (nearest == Entity.Null)
+            if (nearestEnemy == Entity.Null)
                 continue;
 
             float3 enemyPos =
                 state.EntityManager
-                .GetComponentData<LocalTransform>(nearest).Position;
+                    .GetComponentData<LocalTransform>(nearestEnemy)
+                    .Position;
 
-            float3 dir = math.normalize(enemyPos - playerPos);
+            float3 dir3 = math.normalize(enemyPos - playerPos);
+            float2 dir = new float2(dir3.x, dir3.y);
 
-            Entity proj = ecb.Instantiate(
-                SystemAPI.GetSingleton<ProjectilePrefab>().Value
-            );
+            // ===== SPAWN PROJECTILE =====
+
+            Entity proj = ecb.Instantiate(prefab.ValueRO.Value);
 
             ecb.SetComponent(proj, new LocalTransform
             {
@@ -82,7 +85,7 @@ public partial struct FireWandSystem : ISystem
             ecb.AddComponent(proj, new ProjectileData
             {
                 Speed = 6f,
-                Direction = new float2(dir.x, dir.y)
+                Direction = dir
             });
 
             ecb.AddComponent(proj, new ProjectileDamage
