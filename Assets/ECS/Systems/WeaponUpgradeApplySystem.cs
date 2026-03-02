@@ -2,8 +2,16 @@ using Unity.Entities;
 
 public partial struct WeaponUpgradeApplySystem : ISystem
 {
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<WeaponPrefabElement>();
+        state.RequireForUpdate<PlayerTag>();
+    }
+
     public void OnUpdate(ref SystemState state)
     {
+        var registryBuffer = SystemAPI.GetSingletonBuffer<WeaponPrefabElement>();
+
         var ecbSingleton =
             SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
 
@@ -19,7 +27,6 @@ public partial struct WeaponUpgradeApplySystem : ISystem
             .WithEntityAccess())
         {
             WeaponType chosen = selected.ValueRO.Value;
-
             bool alreadyOwned = false;
 
             foreach (var owned in buffer)
@@ -47,7 +54,6 @@ public partial struct WeaponUpgradeApplySystem : ISystem
                 }
             }
 
-            // Jika belum punya dan slot masih ada → buat weapon baru
             if (!alreadyOwned && buffer.Length < slot.ValueRO.MaxSlot)
             {
                 Entity weapon = ecb.CreateEntity();
@@ -55,15 +61,21 @@ public partial struct WeaponUpgradeApplySystem : ISystem
                 ecb.AddComponent<Weapon>(weapon);
                 ecb.AddComponent(weapon, new WeaponOwner { Player = player });
                 ecb.AddComponent(weapon, new WeaponLevel { Value = 1 });
-                ecb.AddComponent(weapon, new WeaponCooldown
+                ecb.AddComponent(weapon, new WeaponCooldown { Value = 0.25f, Timer = 0f });
+                ecb.AddComponent(weapon, new WeaponTypeComponent { Value = chosen });
+
+                // 🔥 Cari prefab dari registry buffer
+                foreach (var entry in registryBuffer)
                 {
-                    Value = 1f,
-                    Timer = 0f
-                });
-                ecb.AddComponent(weapon, new WeaponTypeComponent
-                {
-                    Value = chosen
-                });
+                    if (entry.Type == chosen)
+                    {
+                        ecb.AddComponent(weapon, new WeaponProjectilePrefab
+                        {
+                            Value = entry.Prefab
+                        });
+                        break;
+                    }
+                }
 
                 ecb.AppendToBuffer(player, new OwnedWeapon
                 {

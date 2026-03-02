@@ -45,3 +45,7 @@ public struct SelectedUpgrade : IComponentData
     public WeaponType Value;
 }
 
+public struct PlayerFacing : IComponentData
+{
+    public float2 Direction;
+}

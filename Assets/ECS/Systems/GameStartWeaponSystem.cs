@@ -7,15 +7,20 @@ public partial struct GameStartWeaponSystem : ISystem
     {
         state.RequireForUpdate<PlayerTag>();
         state.RequireForUpdate<WeaponPoolElement>();
+        state.RequireForUpdate<WeaponPrefabElement>();
     }
 
     public void OnUpdate(ref SystemState state)
     {
         var pool = SystemAPI.GetSingletonBuffer<WeaponPoolElement>();
-        if (pool.Length == 0) return;
+        var registry = SystemAPI.GetSingletonBuffer<WeaponPrefabElement>();
+
+        if (pool.Length == 0)
+            return;
 
         var ecbSingleton =
             SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+
         var ecb =
             ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
@@ -40,11 +45,25 @@ public partial struct GameStartWeaponSystem : ISystem
             ecb.AddComponent(weapon, new WeaponCooldown { Value = 1f, Timer = 0f });
             ecb.AddComponent(weapon, new WeaponTypeComponent { Value = startWeapon });
 
-            // WAJIB pakai AppendToBuffer
+            // 🔥 ATTACH PREFAB
+            foreach (var entry in registry)
+            {
+                if (entry.Type == startWeapon)
+                {
+                    ecb.AddComponent(weapon, new WeaponProjectilePrefab
+                    {
+                        Value = entry.Prefab
+                    });
+                    break;
+                }
+            }
+
             ecb.AppendToBuffer(player, new OwnedWeapon
             {
                 WeaponEntity = weapon
             });
         }
+
+        state.Enabled = false; // hanya jalan sekali
     }
 }

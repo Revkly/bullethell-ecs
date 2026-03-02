@@ -60,6 +60,7 @@ public class PlayerAuthoring : MonoBehaviour
                 MaxSlot = 6
             });
             AddBuffer<OwnedWeapon>(entity);
+            AddComponent<PlayerFacing>(entity);
         }
     }
 }

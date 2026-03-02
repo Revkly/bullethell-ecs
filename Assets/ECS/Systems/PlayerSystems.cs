@@ -4,7 +4,6 @@ using Unity.Transforms;
 using UnityEngine.InputSystem;
 using UnityEngine;
 
-
 #region INPUT
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 public partial class PlayerInputSystem : SystemBase
@@ -29,6 +28,7 @@ public partial class PlayerInputSystem : SystemBase
 }
 #endregion
 
+
 #region MOVEMENT
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial class PlayerMovementSystem : SystemBase
@@ -37,16 +37,30 @@ public partial class PlayerMovementSystem : SystemBase
     {
         float dt = SystemAPI.Time.DeltaTime;
 
-        foreach (var (transform, input, speed) in
+        foreach (var (transform, input, speed, facing) in
             SystemAPI.Query<
                 RefRW<LocalTransform>,
                 RefRO<PlayerInput>,
-                RefRO<MoveSpeed>>()
+                RefRO<MoveSpeed>,
+                RefRW<PlayerFacing>>()
             .WithAll<PlayerTag>())
         {
+            float2 moveDir = input.ValueRO.Move;
+
+            // =========================
+            // UPDATE FACING DIRECTION
+            // =========================
+            if (math.lengthsq(moveDir) > 0.0001f)
+            {
+                facing.ValueRW.Direction = math.normalize(moveDir);
+            }
+
+            // =========================
+            // MOVEMENT
+            // =========================
             float3 delta = new float3(
-                input.ValueRO.Move.x * speed.ValueRO.Value * dt,
-                input.ValueRO.Move.y * speed.ValueRO.Value * dt,
+                moveDir.x * speed.ValueRO.Value * dt,
+                moveDir.y * speed.ValueRO.Value * dt,
                 0f
             );
 
