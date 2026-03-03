@@ -330,12 +330,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponPrefabRegistryAuthoring
   weapons:
-  - type: 3
-    prefab: {fileID: 4685545255883661713, guid: da305442062cc8545b13da1db82b267d, type: 3}
-  - type: 3
-    prefab: {fileID: 4685545255883661713, guid: da305442062cc8545b13da1db82b267d, type: 3}
-  - type: 3
-    prefab: {fileID: 4685545255883661713, guid: da305442062cc8545b13da1db82b267d, type: 3}
+  - type: 0
+    prefab: {fileID: 8944846338884730423, guid: 5992f437a4ac27e49b5a986e341dccad, type: 3}
+  - type: 1
+    prefab: {fileID: 8944846338884730423, guid: 7ea2f4e0d16500340baf5ec358a0eaaf, type: 3}
+  - type: 2
+    prefab: {fileID: 8944846338884730423, guid: 871acfc3d47c1b847acfa1b988494912, type: 3}
   - type: 3
     prefab: {fileID: 4685545255883661713, guid: da305442062cc8545b13da1db82b267d, type: 3}
 --- !u!1 &1122694437
