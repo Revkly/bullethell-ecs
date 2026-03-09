@@ -129,6 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 750659755}
   - component: {fileID: 750659754}
+  - component: {fileID: 750659756}
   m_Layer: 0
   m_Name: EnemySpawnerObject
   m_TagString: Untagged
@@ -165,6 +166,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &750659756
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 750659752}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 188ea2ab6411b6e469484e99ccf92470, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameTimeAuthoring
 --- !u!1 &828318624
 GameObject:
   m_ObjectHideFlags: 0
@@ -301,7 +314,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67d41c95a79768d429f09d64ecbf4aae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponPoolAuthoring
-  availableWeapons: 00000000010000000200000003000000
+  availableWeapons: 
 --- !u!4 &952074535
 Transform:
   m_ObjectHideFlags: 0

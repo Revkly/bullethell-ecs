@@ -14,9 +14,23 @@ public class EnemyAuthoring : MonoBehaviour
             Entity e = GetEntity(TransformUsageFlags.Dynamic);
 
             AddComponent<EnemyTag>(e);
-            AddComponent(e, new EnemyMove { Speed = a.speed });
-            AddComponent(e, new EnemyHealth { Value = a.health });
 
+            AddComponent(e, new EnemyMove
+            {
+                Speed = a.speed
+            });
+
+            AddComponent(e, new EnemyHealth
+            {
+                Value = a.health
+            });
+
+            // Base stats untuk difficulty scaling
+            AddComponent(e, new EnemyBaseStats
+            {
+                BaseHealth = a.health,
+                BaseSpeed = a.speed
+            });
         }
     }
 }
