@@ -20,9 +20,16 @@ public partial struct EnemyStatScaleSystem : ISystem
             .WithAll<EnemyTag>()
             .WithNone<DeadTag>())
         {
-            health.ValueRW.Value = baseStats.ValueRO.BaseHealth * difficulty;
+            float scaledHealth = baseStats.ValueRO.BaseHealth * difficulty;
 
-            move.ValueRW.Speed = baseStats.ValueRO.BaseSpeed * (1f + difficulty * 0.2f);
+            // hanya update jika masih sama dengan base health
+            if (math.abs(health.ValueRO.Value - baseStats.ValueRO.BaseHealth) < 0.01f)
+            {
+                health.ValueRW.Value = scaledHealth;
+            }
+
+            move.ValueRW.Speed =
+                baseStats.ValueRO.BaseSpeed * (1f + difficulty * 0.2f);
         }
     }
 }
