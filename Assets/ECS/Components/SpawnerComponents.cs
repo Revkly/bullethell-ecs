@@ -6,3 +6,8 @@ public struct EnemySpawner : IComponentData
     public float SpawnInterval;
     public float Timer;
 }
+
+public struct SpawnRequest : IComponentData
+{
+    public int Count;
+}
