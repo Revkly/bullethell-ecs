@@ -13,18 +13,24 @@ public class SpawnShortcutInput : MonoBehaviour
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Alpha1))
-            CreateRequest(1000);
+            CreateRequest(100);
 
         if (Input.GetKeyDown(KeyCode.Alpha2))
-            CreateRequest(5000);
+            CreateRequest(1000);
 
         if (Input.GetKeyDown(KeyCode.Alpha3))
-            CreateRequest(10000);
+            CreateRequest(5000);
     }
 
     void CreateRequest(int count)
+{
+    Entity e = em.CreateEntity();
+
+    em.AddComponentData(e, new SpawnRequest
     {
-        Entity e = em.CreateEntity();
-        em.AddComponentData(e, new SpawnRequest { Count = count });
-    }
+        Total = count,
+        Spawned = 0,
+        BatchSize = 50 // bisa kamu tuning
+    });
+}
 }

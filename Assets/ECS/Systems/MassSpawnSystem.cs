@@ -19,13 +19,20 @@ public partial struct MassSpawnSystem : ISystem
         var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
         foreach (var (req, entity) in
-            SystemAPI.Query<RefRO<SpawnRequest>>().WithEntityAccess())
+            SystemAPI.Query<RefRW<SpawnRequest>>().WithEntityAccess())
         {
-            int count = req.ValueRO.Count;
+            int remaining = req.ValueRO.Total - req.ValueRO.Spawned;
 
-            Debug.Log("Spawn request: " + count);
+            if (remaining <= 0)
+            {
+                Debug.Log("Spawn selesai");
+                ecb.DestroyEntity(entity);
+                continue;
+            }
 
-            for (int i = 0; i < count; i++)
+            int batch = math.min(req.ValueRO.BatchSize, remaining);
+
+            for (int i = 0; i < batch; i++)
             {
                 float2 pos = UnityEngine.Random.insideUnitCircle * 20f;
 
@@ -39,7 +46,10 @@ public partial struct MassSpawnSystem : ISystem
                 });
             }
 
-            ecb.DestroyEntity(entity);
+            req.ValueRW.Spawned += batch;
+
+            // debug progress
+            Debug.Log($"Spawn progress: {req.ValueRW.Spawned}/{req.ValueRO.Total}");
         }
     }
 }

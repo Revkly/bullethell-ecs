@@ -9,5 +9,7 @@ public struct EnemySpawner : IComponentData
 
 public struct SpawnRequest : IComponentData
 {
-    public int Count;
+    public int Total;
+    public int Spawned;
+    public int BatchSize;
 }
