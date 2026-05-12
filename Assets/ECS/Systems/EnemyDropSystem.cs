@@ -1,35 +1,36 @@
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-using Unity.Collections;
+using Unity.Burst;
 
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[BurstCompile]
 public partial struct EnemyDropSystem : ISystem
 {
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        var ecb = new EntityCommandBuffer(Allocator.Temp);
+        if (!SystemAPI.HasSingleton<ExpGemPrefab>()) return;
+
+        var gemPrefab = SystemAPI.GetSingleton<ExpGemPrefab>().Value;
+
+        var ecb = SystemAPI
+            .GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
+            .CreateCommandBuffer(state.WorldUnmanaged);
 
         foreach (var (transform, entity) in
             SystemAPI.Query<RefRO<LocalTransform>>()
                      .WithAll<EnemyTag, DeadTag>()
                      .WithEntityAccess())
         {
-            // Spawn XP
-            Entity xp = ecb.Instantiate(
-                SystemAPI.GetSingleton<ExpGemPrefab>().Value
-            );
-
+            Entity xp = ecb.Instantiate(gemPrefab);
             ecb.SetComponent(xp, new LocalTransform
             {
                 Position = transform.ValueRO.Position,
                 Rotation = quaternion.identity,
-                Scale = 0.3f
+                Scale    = 0.1f
             });
-
-            // Hapus enemy SETELAH XP spawn
             ecb.DestroyEntity(entity);
         }
-
-        ecb.Playback(state.EntityManager);
     }
 }

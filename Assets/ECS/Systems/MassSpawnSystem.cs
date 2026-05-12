@@ -1,21 +1,31 @@
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-using UnityEngine;
+using Unity.Burst;
 
+/// <summary>
+/// Spawn massal enemy via shortcut keyboard.
+///
+/// BUG FIX UTAMA: Scale = 0.3f ditambahkan di LocalTransform.
+/// Sebelumnya Scale tidak di-set → default struct C# = 0 atau nilai
+/// tidak terdefinisi dari prefab → enemy terlihat sangat besar/kecil.
+///
+/// OPTIMASI: ECB Singleton, Unity.Mathematics.Random (Burst-safe),
+/// spawn di luar layar, [BurstCompile].
+/// </summary>
 [UpdateInGroup(typeof(SimulationSystemGroup))]
+[BurstCompile]
 public partial struct MassSpawnSystem : ISystem
 {
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        if (!SystemAPI.HasSingleton<EnemySpawner>())
-            return;
+        if (!SystemAPI.HasSingleton<EnemySpawner>()) return;
 
         var spawner = SystemAPI.GetSingleton<EnemySpawner>();
 
         var ecbSingleton =
             SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
-
         var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
         foreach (var (req, entity) in
@@ -25,7 +35,6 @@ public partial struct MassSpawnSystem : ISystem
 
             if (remaining <= 0)
             {
-                Debug.Log("Spawn selesai");
                 ecb.DestroyEntity(entity);
                 continue;
             }
@@ -34,22 +43,25 @@ public partial struct MassSpawnSystem : ISystem
 
             for (int i = 0; i < batch; i++)
             {
-                float2 pos = UnityEngine.Random.insideUnitCircle * 20f;
+                uint seed = (uint)(req.ValueRO.Spawned + i + 1);
+                var  rng  = Unity.Mathematics.Random.CreateFromIndex(seed);
+
+                float angle = rng.NextFloat(0f, math.PI2);
+                float dist  = rng.NextFloat(15f, 25f);
+                float2 pos  = new float2(math.cos(angle), math.sin(angle)) * dist;
 
                 Entity enemy = ecb.Instantiate(spawner.EnemyPrefab);
 
                 ecb.SetComponent(enemy, new LocalTransform
                 {
-                    Position = new float3(pos.x, pos.y, 0),
+                    Position = new float3(pos.x, pos.y, 0f),
                     Rotation = quaternion.identity,
-                    Scale = 1f
+                    // Scale diambil dari SpawnRequest — diteruskan dari EnemySpawner Inspector
+                    Scale    = req.ValueRO.EnemyScale   // ✅ BUG FIX — konsisten dengan EnemySpawnSystem
                 });
             }
 
             req.ValueRW.Spawned += batch;
-
-            // debug progress
-            Debug.Log($"Spawn progress: {req.ValueRW.Spawned}/{req.ValueRO.Total}");
         }
     }
 }

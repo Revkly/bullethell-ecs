@@ -1,10 +1,19 @@
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-using Unity.Collections;
+using Unity.Burst;
 
+/// <summary>
+/// Pickup XP gem saat player berada dalam radius.
+///
+/// OPTIMASI: ECB Singleton menggantikan Allocator.Temp.
+/// [BurstCompile] untuk query yang lebih cepat.
+/// </summary>
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[BurstCompile]
 public partial struct ExpPickupSystem : ISystem
 {
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         float3 playerPos = float3.zero;
@@ -17,7 +26,22 @@ public partial struct ExpPickupSystem : ISystem
             break;
         }
 
-        var ecb = new EntityCommandBuffer(Allocator.Temp);
+        var ecbSingleton =
+            SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+        var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
+
+        // Cache ref PlayerExp agar tidak query di dalam loop gem
+        RefRW<PlayerExp> playerExpRef = default;
+        bool hasPlayer = false;
+
+        foreach (var playerExp in SystemAPI.Query<RefRW<PlayerExp>>().WithAll<PlayerTag>())
+        {
+            playerExpRef = playerExp;
+            hasPlayer = true;
+            break;
+        }
+
+        if (!hasPlayer) return;
 
         foreach (var (transform, value, radius, entity) in
             SystemAPI.Query<
@@ -31,17 +55,9 @@ public partial struct ExpPickupSystem : ISystem
 
             if (dist <= radius.ValueRO.Value)
             {
-                foreach (var playerExp in
-                    SystemAPI.Query<RefRW<PlayerExp>>()
-                             .WithAll<PlayerTag>())
-                {
-                    playerExp.ValueRW.Current += value.ValueRO.Value;
-                }
-
+                playerExpRef.ValueRW.Current += value.ValueRO.Value;
                 ecb.DestroyEntity(entity);
             }
         }
-
-        ecb.Playback(state.EntityManager);
     }
 }

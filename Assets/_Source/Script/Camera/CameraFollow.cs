@@ -3,46 +3,58 @@ using Unity.Entities;
 using Unity.Transforms;
 using Unity.Mathematics;
 
+/// <summary>
+/// Kamera mengikuti player dengan smooth lerp.
+///
+/// FIX: CreateEntityQuery() dipindah ke Awake — sebelumnya dipanggil
+/// berulang di LateUpdate() setiap frame sampai player ditemukan.
+/// Membuat query di dalam Update adalah alokasi yang tidak perlu.
+/// </summary>
 public class CameraFollow : MonoBehaviour
 {
-    public float smoothSpeed = 5f;
-    public Vector3 offset = new Vector3(0, 0, -10);
+    public float  smoothSpeed = 5f;
+    public Vector3 offset     = new Vector3(0, 0, -10);
 
-    private EntityManager entityManager;
-    private Entity playerEntity;
-    private bool playerFound = false;
+    private EntityManager _entityManager;
+    private EntityQuery   _playerQuery;
+    private Entity        _playerEntity;
+    private bool          _playerFound;
 
-    void Start()
+    void Awake()
     {
-        entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+        _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+
+        // Buat query SEKALI di Awake, bukan berulang di LateUpdate
+        _playerQuery = _entityManager.CreateEntityQuery(
+            typeof(PlayerTag),
+            typeof(LocalTransform));
     }
 
     void LateUpdate()
     {
-        if (!playerFound)
+        if (!_playerFound)
         {
-            var query = entityManager.CreateEntityQuery(typeof(PlayerTag), typeof(LocalTransform));
+            if (_playerQuery.CalculateEntityCount() == 0) return;
 
-            if (query.CalculateEntityCount() > 0)
-            {
-                playerEntity = query.GetSingletonEntity();
-                playerFound = true;
-            }
-            return;
+            _playerEntity = _playerQuery.GetSingletonEntity();
+            _playerFound  = true;
         }
 
-        if (!entityManager.Exists(playerEntity))
-            return;
+        if (!_entityManager.Exists(_playerEntity)) return;
 
-        float3 playerPos = entityManager
-            .GetComponentData<LocalTransform>(playerEntity).Position;
+        float3 playerPos = _entityManager
+            .GetComponentData<LocalTransform>(_playerEntity).Position;
 
-        Vector3 targetPosition = new Vector3(playerPos.x, playerPos.y, 0) + offset;
+        Vector3 target = new Vector3(playerPos.x, playerPos.y, 0f) + offset;
 
         transform.position = Vector3.Lerp(
             transform.position,
-            targetPosition,
-            smoothSpeed * Time.deltaTime
-        );
+            target,
+            smoothSpeed * Time.deltaTime);
+    }
+
+    void OnDestroy()
+    {
+        _playerQuery.Dispose();
     }
 }

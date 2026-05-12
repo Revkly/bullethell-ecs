@@ -1,5 +1,10 @@
 using Unity.Entities;
 
+/// <summary>
+/// Terapkan pilihan upgrade: upgrade senjata yang sudah dimiliki, atau tambah senjata baru.
+/// Berjalan hanya saat player memiliki SelectedUpgrade.
+/// </summary>
+[UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct WeaponUpgradeApplySystem : ISystem
 {
     public void OnCreate(ref SystemState state)
@@ -14,9 +19,7 @@ public partial struct WeaponUpgradeApplySystem : ISystem
 
         var ecbSingleton =
             SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
-
-        var ecb =
-            ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
+        var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
         foreach (var (selected, slot, buffer, player) in
             SystemAPI.Query<
@@ -26,13 +29,12 @@ public partial struct WeaponUpgradeApplySystem : ISystem
             .WithAll<PlayerTag>()
             .WithEntityAccess())
         {
-            WeaponType chosen = selected.ValueRO.Value;
-            bool alreadyOwned = false;
+            WeaponType chosen      = selected.ValueRO.Value;
+            bool       alreadyOwned = false;
 
             foreach (var owned in buffer)
             {
-                if (!state.EntityManager.Exists(owned.WeaponEntity))
-                    continue;
+                if (!state.EntityManager.Exists(owned.WeaponEntity)) continue;
 
                 var type = state.EntityManager
                     .GetComponentData<WeaponTypeComponent>(owned.WeaponEntity);
@@ -45,8 +47,7 @@ public partial struct WeaponUpgradeApplySystem : ISystem
                     if (level.Value < 3)
                     {
                         level.Value += 1;
-                        state.EntityManager
-                            .SetComponentData(owned.WeaponEntity, level);
+                        state.EntityManager.SetComponentData(owned.WeaponEntity, level);
                     }
 
                     alreadyOwned = true;
@@ -59,12 +60,11 @@ public partial struct WeaponUpgradeApplySystem : ISystem
                 Entity weapon = ecb.CreateEntity();
 
                 ecb.AddComponent<Weapon>(weapon);
-                ecb.AddComponent(weapon, new WeaponOwner { Player = player });
-                ecb.AddComponent(weapon, new WeaponLevel { Value = 1 });
-                ecb.AddComponent(weapon, new WeaponCooldown { Value = 0.25f, Timer = 0f });
-                ecb.AddComponent(weapon, new WeaponTypeComponent { Value = chosen });
+                ecb.AddComponent(weapon, new WeaponOwner        { Player = player  });
+                ecb.AddComponent(weapon, new WeaponLevel        { Value  = 1       });
+                ecb.AddComponent(weapon, new WeaponCooldown     { Value  = 0.25f, Timer = 0f });
+                ecb.AddComponent(weapon, new WeaponTypeComponent{ Value  = chosen  });
 
-                // 🔥 Cari prefab dari registry buffer
                 foreach (var entry in registryBuffer)
                 {
                     if (entry.Type == chosen)
@@ -77,10 +77,7 @@ public partial struct WeaponUpgradeApplySystem : ISystem
                     }
                 }
 
-                ecb.AppendToBuffer(player, new OwnedWeapon
-                {
-                    WeaponEntity = weapon
-                });
+                ecb.AppendToBuffer(player, new OwnedWeapon { WeaponEntity = weapon });
             }
 
             ecb.RemoveComponent<SelectedUpgrade>(player);

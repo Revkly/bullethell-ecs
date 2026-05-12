@@ -1,8 +1,7 @@
 using Unity.Entities;
-using Unity.Mathematics;
 
-
-public struct Weapon : IComponentData {}
+// ─── Weapon base ─────────────────────────────────────────────────────────────
+public struct Weapon              : IComponentData {}
 
 public struct WeaponOwner : IComponentData
 {
@@ -16,10 +15,21 @@ public struct WeaponLevel : IComponentData
 
 public struct WeaponCooldown : IComponentData
 {
-    public float Value;
-    public float Timer;
+    public float Value;   // interval
+    public float Timer;   // countdown
 }
 
+public struct WeaponTypeComponent : IComponentData
+{
+    public WeaponType Value;
+}
+
+public struct WeaponSlot : IComponentData
+{
+    public int MaxSlot;
+}
+
+// ─── Weapon types ─────────────────────────────────────────────────────────────
 public enum WeaponType
 {
     Whip,
@@ -34,20 +44,4 @@ public enum WeaponType
     Magnet
 }
 
-public struct WeaponTypeComponent : IComponentData
-{
-    public WeaponType Value;
-}
-
-public struct WeaponSlot : IComponentData
-{
-    public int MaxSlot;
-}
-
-public struct EnemyKnockback : IComponentData
-{
-    public float2 Direction;
-    public float Force;
-    public float Timer;
-}
-
+// NOTE: EnemyKnockback sudah dipindah ke EnemyComponents.cs — jangan duplikasi

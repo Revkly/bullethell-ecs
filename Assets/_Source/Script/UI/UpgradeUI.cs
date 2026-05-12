@@ -3,35 +3,32 @@ using UnityEngine.UI;
 using TMPro;
 using Unity.Entities;
 
+/// <summary>
+/// UI untuk memilih upgrade saat player level up.
+///
+/// FIX: Ganti em.GetAllEntities() di Start dengan CreateEntityQuery.
+/// GetAllEntities() mengalokasikan NativeArray berisi SEMUA entity —
+/// sangat mahal dan langsung dibuang setelah satu iterasi.
+/// </summary>
 public class UpgradeUI : MonoBehaviour
 {
     public GameObject panel;
+    public Button     buttonA, buttonB, buttonC;
+    public TMP_Text   textA,   textB,   textC;
 
-    public Button buttonA;
-    public Button buttonB;
-    public Button buttonC;
-
-    public TMP_Text textA;
-    public TMP_Text textB;
-    public TMP_Text textC;
-
-    EntityManager em;
-    Entity player;
-
-    bool isOpen = false;
+    private EntityManager _em;
+    private Entity        _player;
+    private bool          _isOpen;
 
     void Start()
     {
-        em = World.DefaultGameObjectInjectionWorld.EntityManager;
+        _em = World.DefaultGameObjectInjectionWorld.EntityManager;
 
-        foreach (var e in em.GetAllEntities())
-        {
-            if (em.HasComponent<PlayerTag>(e))
-            {
-                player = e;
-                break;
-            }
-        }
+        // Gunakan EntityQuery — efisien, tidak alokasi semua entity
+        var query = _em.CreateEntityQuery(typeof(PlayerTag));
+        if (query.CalculateEntityCount() > 0)
+            _player = query.GetSingletonEntity();
+        query.Dispose();
 
         panel.SetActive(false);
 
@@ -42,24 +39,17 @@ public class UpgradeUI : MonoBehaviour
 
     void Update()
     {
-        if (!em.Exists(player))
-            return;
+        if (!_em.Exists(_player)) return;
 
-        bool hasUpgrade = em.HasComponent<PendingUpgrade>(player);
+        bool hasUpgrade = _em.HasComponent<PendingUpgrade>(_player);
 
-        if (hasUpgrade && !isOpen)
-        {
-            Open();
-        }
-        else if (!hasUpgrade && isOpen)
-        {
-            Close();
-        }
+        if (hasUpgrade && !_isOpen)  Open();
+        else if (!hasUpgrade && _isOpen) Close();
     }
 
     void Open()
     {
-        var upgrade = em.GetComponentData<PendingUpgrade>(player);
+        var upgrade = _em.GetComponentData<PendingUpgrade>(_player);
 
         textA.text = GetDisplay(upgrade.OptionA);
         textB.text = GetDisplay(upgrade.OptionB);
@@ -67,27 +57,29 @@ public class UpgradeUI : MonoBehaviour
 
         panel.SetActive(true);
         Time.timeScale = 0f;
-        isOpen = true;
+        _isOpen = true;
     }
 
     void Close()
     {
         panel.SetActive(false);
         Time.timeScale = 1f;
-        isOpen = false;
+        _isOpen = false;
     }
 
     string GetDisplay(WeaponType type)
     {
-        var buffer = em.GetBuffer<OwnedWeapon>(player);
+        var buffer = _em.GetBuffer<OwnedWeapon>(_player);
 
         foreach (var owned in buffer)
         {
-            var weaponType = em.GetComponentData<WeaponTypeComponent>(owned.WeaponEntity);
+            if (!_em.Exists(owned.WeaponEntity)) continue;
+
+            var weaponType = _em.GetComponentData<WeaponTypeComponent>(owned.WeaponEntity);
 
             if (weaponType.Value == type)
             {
-                int level = em.GetComponentData<WeaponLevel>(owned.WeaponEntity).Value;
+                int level     = _em.GetComponentData<WeaponLevel>(owned.WeaponEntity).Value;
                 int nextLevel = Mathf.Min(level + 1, 3);
                 return type + "  Lv." + nextLevel;
             }
@@ -98,19 +90,18 @@ public class UpgradeUI : MonoBehaviour
 
     void Select(int index)
     {
-        var upgrade = em.GetComponentData<PendingUpgrade>(player);
+        var upgrade = _em.GetComponentData<PendingUpgrade>(_player);
 
-        WeaponType chosen = upgrade.OptionA;
-
-        if (index == 1) chosen = upgrade.OptionB;
-        if (index == 2) chosen = upgrade.OptionC;
-
-        if (!em.HasComponent<SelectedUpgrade>(player))
+        WeaponType chosen = index switch
         {
-            em.AddComponentData(player,
-                new SelectedUpgrade { Value = chosen });
-        }
+            1 => upgrade.OptionB,
+            2 => upgrade.OptionC,
+            _ => upgrade.OptionA
+        };
 
-        em.RemoveComponent<PendingUpgrade>(player);
+        if (!_em.HasComponent<SelectedUpgrade>(_player))
+            _em.AddComponentData(_player, new SelectedUpgrade { Value = chosen });
+
+        _em.RemoveComponent<PendingUpgrade>(_player);
     }
 }

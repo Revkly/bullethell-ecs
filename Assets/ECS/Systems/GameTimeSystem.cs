@@ -1,15 +1,28 @@
 using Unity.Entities;
+using Unity.Burst;
 
+/// <summary>
+/// Update waktu game yang telah berjalan.
+///
+/// OPTIMASI: Pakai SetSingleton — lebih cache-friendly dari foreach query
+/// saat hanya ada satu instance. [BurstCompile].
+/// </summary>
 [UpdateInGroup(typeof(SimulationSystemGroup))]
+[BurstCompile]
 public partial struct GameTimeSystem : ISystem
 {
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        float dt = SystemAPI.Time.DeltaTime;
+        if (!SystemAPI.HasSingleton<GameTime>())
+            return;
 
-        foreach (var time in SystemAPI.Query<RefRW<GameTime>>())
+        float dt      = SystemAPI.Time.DeltaTime;
+        var   current = SystemAPI.GetSingleton<GameTime>();
+
+        SystemAPI.SetSingleton(new GameTime
         {
-            time.ValueRW.Elapsed += dt;
-        }
+            Elapsed = current.Elapsed + dt
+        });
     }
 }
