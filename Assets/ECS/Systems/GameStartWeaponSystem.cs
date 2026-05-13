@@ -5,8 +5,10 @@ using Unity.Burst;
 /// <summary>
 /// Berikan senjata awal kepada player secara random saat game mulai.
 ///
-/// OPTIMASI: Ganti UnityEngine.Random dengan Unity.Mathematics.Random
-/// agar Burst-compatible. Sistem ini hanya berjalan SEKALI (state.Enabled = false).
+/// BUG FIX: Seed sebelumnya pakai SystemAPI.Time.ElapsedTime.GetHashCode()
+/// yang selalu 0 di awal game → random selalu pilih index 0 → selalu weapon pertama.
+///
+/// Fix: Seed dari kombinasi beberapa sumber agar benar-benar acak tiap play.
 /// </summary>
 [BurstCompile]
 public partial struct GameStartWeaponSystem : ISystem
@@ -30,9 +32,15 @@ public partial struct GameStartWeaponSystem : ISystem
             SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
         var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
-        // Unity.Mathematics.Random — Burst-safe
-        var rng = Unity.Mathematics.Random.CreateFromIndex(
-            (uint)SystemAPI.Time.ElapsedTime.GetHashCode());
+        // FIX: Seed dari frame count + entity count + waktu
+        // Hasilnya benar-benar berbeda setiap kali Play ditekan
+        uint seed = (uint)(
+            state.WorldUnmanaged.Time.ElapsedTime * 1000 +
+            state.EntityManager.UniversalQuery.CalculateEntityCount() +
+            System.DateTime.Now.Millisecond +
+            1); // +1 pastikan seed tidak pernah 0
+
+        var rng = Unity.Mathematics.Random.CreateFromIndex(seed);
 
         foreach (var (slot, buffer, player) in
             SystemAPI.Query<
@@ -43,16 +51,17 @@ public partial struct GameStartWeaponSystem : ISystem
         {
             if (buffer.Length > 0) continue;
 
+            // Pilih senjata random dari pool
             int        r           = rng.NextInt(0, pool.Length);
             WeaponType startWeapon = pool[r].Value;
 
             Entity weapon = ecb.CreateEntity();
 
             ecb.AddComponent<Weapon>(weapon);
-            ecb.AddComponent(weapon, new WeaponOwner        { Player = player });
-            ecb.AddComponent(weapon, new WeaponLevel        { Value  = 1      });
-            ecb.AddComponent(weapon, new WeaponCooldown     { Value  = 1f, Timer = 0f });
-            ecb.AddComponent(weapon, new WeaponTypeComponent{ Value  = startWeapon  });
+            ecb.AddComponent(weapon, new WeaponOwner         { Player = player      });
+            ecb.AddComponent(weapon, new WeaponLevel         { Value  = 1           });
+            ecb.AddComponent(weapon, new WeaponCooldown      { Value  = 1f, Timer = 0f });
+            ecb.AddComponent(weapon, new WeaponTypeComponent { Value  = startWeapon });
 
             foreach (var entry in registry)
             {

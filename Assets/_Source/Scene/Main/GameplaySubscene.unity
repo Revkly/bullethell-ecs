@@ -151,7 +151,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnerAuthoring
   enemyPrefab: {fileID: 8032681728911427991, guid: b40c2b66bacb3444791c4ea2a7b753e2, type: 3}
   spawnInterval: 1
-  enemyScale: 0.1
+  enemyScale: 1
 --- !u!4 &750659755
 Transform:
   m_ObjectHideFlags: 0
