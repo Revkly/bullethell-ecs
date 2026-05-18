@@ -22,8 +22,8 @@ public class SpawnShortcutInput : MonoBehaviour
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Alpha1)) CreateRequest(100);
-        if (Input.GetKeyDown(KeyCode.Alpha2)) CreateRequest(1000);
-        if (Input.GetKeyDown(KeyCode.Alpha3)) CreateRequest(5000);
+        if (Input.GetKeyDown(KeyCode.Alpha2)) CreateRequest(500);
+        if (Input.GetKeyDown(KeyCode.Alpha3)) CreateRequest(1000);
     }
 
     void CreateRequest(int count)
