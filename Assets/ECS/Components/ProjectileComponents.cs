@@ -3,9 +3,17 @@ using Unity.Mathematics;
 
 // ─── Tags ─────────────────────────────────────────────────────────────────────
 public struct ProjectileTag : IComponentData {}
-
-// KnifeTag dipindah ke sini dari WeaponProjectilePrefab.cs — satu tempat
 public struct KnifeTag      : IComponentData {}
+
+// ─── Visual ───────────────────────────────────────────────────────────────────
+/// <summary>
+/// Scale asli prefab, di-bake oleh ProjectileAuthoring dari Transform Inspector.
+/// Weapon system membaca ini saat Instantiate alih-alih hardcode angka.
+/// </summary>
+public struct ProjectileScale : IComponentData
+{
+    public float Value;
+}
 
 // ─── Movement ─────────────────────────────────────────────────────────────────
 public struct ProjectileData : IComponentData

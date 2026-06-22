@@ -7,7 +7,8 @@ using Unity.Burst;
 /// Senjata Knife: menembak ke arah hadap player dengan spread sesuai level.
 /// Pierce (tidak hancur saat hit) — ditandai dengan KnifeTag.
 ///
-/// OPTIMASI: [BurstCompile]
+/// FIX: Scale tidak lagi hardcode 0.1f — dibaca dari ProjectileScale
+/// yang di-bake otomatis dari Transform prefab Knife di Inspector.
 /// </summary>
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [BurstCompile]
@@ -57,6 +58,12 @@ public partial struct KnifeSystem : ISystem
             if (math.lengthsq(baseDir) < 0.001f)
                 continue;
 
+            // Baca scale asli prefab Knife — bukan hardcode
+            float projScale = 0.1f; // fallback jika prefab belum punya ProjectileScale
+            if (state.EntityManager.HasComponent<ProjectileScale>(prefab.ValueRO.Value))
+                projScale = state.EntityManager
+                    .GetComponentData<ProjectileScale>(prefab.ValueRO.Value).Value;
+
             int   count  = level.ValueRO.Value;
             float spread = 15f * (count - 1);
 
@@ -81,7 +88,7 @@ public partial struct KnifeSystem : ISystem
                 {
                     Position = playerPos,
                     Rotation = quaternion.RotateZ(math.atan2(dir.y, dir.x)),
-                    Scale    = 0.1f
+                    Scale    = projScale   // ✅ FIX — ikut scale prefab Inspector
                 });
 
                 ecb.AddComponent(proj, new ProjectileData

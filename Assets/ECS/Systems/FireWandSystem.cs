@@ -59,13 +59,19 @@ public partial struct FireWandSystem : ISystem
             float3 dir3 = math.normalizesafe(cache.Position - playerPos);
             float2 dir  = new float2(dir3.x, dir3.y);
 
+            // Baca scale asli prefab — bukan hardcode
+            float projScale = 0.1f;
+            if (state.EntityManager.HasComponent<ProjectileScale>(prefab.ValueRO.Value))
+                projScale = state.EntityManager
+                    .GetComponentData<ProjectileScale>(prefab.ValueRO.Value).Value;
+
             Entity proj = ecb.Instantiate(prefab.ValueRO.Value);
 
             ecb.SetComponent(proj, new LocalTransform
             {
                 Position = playerPos,
                 Rotation = quaternion.identity,
-                Scale    = 0.1f
+                Scale    = projScale   // ✅ FIX — ikut scale prefab Inspector
             });
 
             ecb.AddComponent(proj, new ProjectileData
