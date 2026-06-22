@@ -1,7 +1,6 @@
 using Unity.Entities;
 
-// ─── Weapon base ─────────────────────────────────────────────────────────────
-public struct Weapon              : IComponentData {}
+public struct Weapon : IComponentData {}
 
 public struct WeaponOwner : IComponentData
 {
@@ -15,8 +14,8 @@ public struct WeaponLevel : IComponentData
 
 public struct WeaponCooldown : IComponentData
 {
-    public float Value;   // interval
-    public float Timer;   // countdown
+    public float Value;   
+    public float Timer;  
 }
 
 public struct WeaponTypeComponent : IComponentData
@@ -29,7 +28,6 @@ public struct WeaponSlot : IComponentData
     public int MaxSlot;
 }
 
-// ─── Weapon types ─────────────────────────────────────────────────────────────
 public enum WeaponType
 {
     Whip,
@@ -43,5 +41,3 @@ public enum WeaponType
     Lightning,
     Magnet
 }
-
-// NOTE: EnemyKnockback sudah dipindah ke EnemyComponents.cs — jangan duplikasi

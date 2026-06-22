@@ -29,7 +29,6 @@ public partial struct EnemyMoveSystem : ISystem
 
         float dt = SystemAPI.Time.DeltaTime;
 
-        // ✅ OPTIMASI: IJobEntity — dieksekusi paralel oleh Unity Job System
         new EnemyMoveJob
         {
             PlayerPos = playerPos,

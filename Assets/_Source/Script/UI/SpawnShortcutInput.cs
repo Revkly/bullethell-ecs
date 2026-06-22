@@ -28,7 +28,6 @@ public class SpawnShortcutInput : MonoBehaviour
 
     void CreateRequest(int count)
     {
-        // Baca EnemyScale dari spawner agar konsisten
         float enemyScale = 0.1f;
         var spawnerQuery = _em.CreateEntityQuery(typeof(EnemySpawner));
         if (spawnerQuery.CalculateEntityCount() > 0)
