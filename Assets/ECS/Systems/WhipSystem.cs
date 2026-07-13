@@ -6,10 +6,14 @@ using Unity.Burst;
 /// <summary>
 /// Senjata Whip: serangan area di sekeliling player.
 ///
+/// BALANCE:
+/// - Cooldown scale berdasarkan level (3.0s di lvl 1 → 1.5s di lvl 5+)
+/// - Lifetime 0.4s agar visual jelas terlihat, bukan kedip
+/// - Damage diterapkan 1x per aktivasi (lihat WhipDamageSystem + HasDamaged flag)
+///
 /// OPTIMASI:
-/// - Hapus state.EntityManager.GetComponentData di dalam foreach loop.
-///   Ganti dengan query filter WithAll + komponen langsung di query.
 /// - [BurstCompile]
+/// - Spawn dari prefab (ecb.Instantiate) agar visual terlihat in-game
 /// </summary>
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [BurstCompile]
@@ -24,12 +28,12 @@ public partial struct WhipSystem : ISystem
             SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
         var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
-        // Query langsung sertakan WeaponTypeComponent — tidak perlu GetComponentData
-        foreach (var (cooldown, owner, level, type) in
+        foreach (var (cooldown, owner, level, prefab, type) in
             SystemAPI.Query<
                 RefRW<WeaponCooldown>,
                 RefRO<WeaponOwner>,
                 RefRO<WeaponLevel>,
+                RefRO<WeaponProjectilePrefab>,
                 RefRO<WeaponTypeComponent>>()
             .WithAll<Weapon>())
         {
@@ -40,7 +44,11 @@ public partial struct WhipSystem : ISystem
             if (cooldown.ValueRO.Timer > 0f)
                 continue;
 
-            cooldown.ValueRW.Timer = cooldown.ValueRO.Value;
+            // BALANCE: Cooldown scale berdasarkan level
+            // Lvl 1 = 1.0s, Lvl 2 = 0.8s, Lvl 3+ = 0.5s
+            int   lvl         = level.ValueRO.Value;
+            float baseCooldown = lvl >= 3 ? 0.5f : lvl >= 2 ? 0.8f : 1.0f;
+            cooldown.ValueRW.Timer = baseCooldown;
 
             if (!state.EntityManager.Exists(owner.ValueRO.Player))
                 continue;
@@ -50,24 +58,33 @@ public partial struct WhipSystem : ISystem
                     .GetComponentData<LocalTransform>(owner.ValueRO.Player)
                     .Position;
 
-            float radius = 1.5f + level.ValueRO.Value * 0.5f;
-            float damage = 10f  + level.ValueRO.Value * 5f;
+            // BALANCE: radius dan damage scale per level
+            float radius   = 1.5f + lvl * 0.5f;
+            float damage   = 20f  + lvl * 10f;
+            float lifetime = 0.4f; // cukup lama agar visual jelas
 
-            Entity hitbox = ecb.CreateEntity();
+            // Instantiate dari prefab agar visual (sprite) terlihat
+            Entity hitbox = ecb.Instantiate(prefab.ValueRO.Value);
 
-            ecb.AddComponent(hitbox, new LocalTransform
+            // Baca scale asli prefab dari Inspector, kalikan dengan radius
+            float prefabScale = state.EntityManager
+                .GetComponentData<LocalTransform>(prefab.ValueRO.Value).Scale;
+
+            ecb.SetComponent(hitbox, new LocalTransform
             {
                 Position = playerPos,
                 Rotation = quaternion.identity,
-                Scale    = 0.1f
+                Scale    = prefabScale * radius
             });
 
             ecb.AddComponent(hitbox, new WhipHitbox
             {
-                Radius   = radius,
-                Damage   = damage,
-                Lifetime = 0.15f
+                Radius     = radius,
+                Damage     = damage,
+                Lifetime   = lifetime,
+                HasDamaged = false
             });
         }
     }
 }
+

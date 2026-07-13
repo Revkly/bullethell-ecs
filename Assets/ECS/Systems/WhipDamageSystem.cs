@@ -4,15 +4,17 @@ using Unity.Transforms;
 using Unity.Burst;
 
 /// <summary>
-/// Whip area damage — aktif selama 0.15 detik.
+/// Whip area damage — hit 1x per aktivasi, visual tetap tampil selama lifetime.
+///
+/// BALANCE:
+/// - Damage hanya diterapkan 1x (frame pertama) menggunakan HasDamaged flag.
+///   Sebelumnya damage diterapkan setiap frame selama 0.15s (~9 frame),
+///   menghasilkan damage 9x lipat dari yang seharusnya.
+/// - Lifetime sekarang 0.4s agar visual jelas terlihat (bukan kedip).
 ///
 /// OPTIMASI:
 /// - [BurstCompile]
-/// - ECB Singleton sudah dipakai (sudah benar sebelumnya)
-/// - Nested loop O(n²) ini tidak bisa dihindari sepenuhnya untuk AoE,
-///   tapi dibatasi oleh lifetime pendek (0.15s) sehingga hanya jalan ~9 frame.
-///   Untuk 5000 enemy ini masih bisa berat — pertimbangkan spatial hashing
-///   jika perlu lebih dari 2000 enemy aktif.
+/// - ECB Singleton untuk destroy entity
 /// </summary>
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [BurstCompile]
@@ -35,23 +37,30 @@ public partial struct WhipDamageSystem : ISystem
         {
             hitbox.ValueRW.Lifetime -= dt;
 
-            foreach (var (enemyTransform, enemyHealth) in
-                SystemAPI.Query<
-                    RefRO<LocalTransform>,
-                    RefRW<EnemyHealth>>()
-                .WithAll<EnemyTag>()
-                .WithNone<DeadTag>())
+            // BALANCE: Hanya damage 1x per aktivasi
+            if (!hitbox.ValueRO.HasDamaged)
             {
-                float dist = math.distance(
-                    transform.ValueRO.Position,
-                    enemyTransform.ValueRO.Position);
+                hitbox.ValueRW.HasDamaged = true;
 
-                if (dist <= hitbox.ValueRO.Radius)
-                    enemyHealth.ValueRW.Value -= hitbox.ValueRO.Damage;
+                foreach (var (enemyTransform, enemyHealth) in
+                    SystemAPI.Query<
+                        RefRO<LocalTransform>,
+                        RefRW<EnemyHealth>>()
+                    .WithAll<EnemyTag>()
+                    .WithNone<DeadTag>())
+                {
+                    float dist = math.distance(
+                        transform.ValueRO.Position,
+                        enemyTransform.ValueRO.Position);
+
+                    if (dist <= hitbox.ValueRO.Radius)
+                        enemyHealth.ValueRW.Value -= hitbox.ValueRO.Damage;
+                }
             }
 
+            // Destroy setelah lifetime habis (visual sudah selesai tampil)
             if (hitbox.ValueRO.Lifetime <= 0f)
                 ecb.DestroyEntity(entity);
         }
     }
-}
+}

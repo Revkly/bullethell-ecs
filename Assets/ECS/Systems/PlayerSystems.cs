@@ -20,6 +20,12 @@ public partial class PlayerInputSystem : SystemBase
     {
         float2 move = input.Player.Move.ReadValue<Vector2>();
 
+        // Cek input dari analog mobile jika tidak ada input dari keyboard/gamepad
+        if (math.lengthsq(move) < 0.001f && MobileJoystick.Output.sqrMagnitude > 0.001f)
+        {
+            move = new float2(MobileJoystick.Output.x, MobileJoystick.Output.y);
+        }
+
         foreach (var inputData in SystemAPI.Query<RefRW<PlayerInput>>())
         {
             inputData.ValueRW.Move = math.normalizesafe(move);

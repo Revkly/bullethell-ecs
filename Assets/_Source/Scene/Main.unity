@@ -155,10 +155,10 @@ RectTransform:
   - {fileID: 1475137310}
   m_Father: {fileID: 1331583499}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 960, y: -540}
+  m_SizeDelta: {x: 400, y: 700}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &10820939
 MonoBehaviour:
@@ -1770,10 +1770,10 @@ RectTransform:
   - {fileID: 943328703}
   m_Father: {fileID: 1331583499}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 460, y: -540}
+  m_SizeDelta: {x: 400, y: 700}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1219443856
 MonoBehaviour:
@@ -2139,7 +2139,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1331583499
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2601,10 +2601,10 @@ RectTransform:
   - {fileID: 761609920}
   m_Father: {fileID: 1331583499}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 1460, y: -540}
+  m_SizeDelta: {x: 400, y: 700}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1731812595
 MonoBehaviour:
@@ -3274,10 +3274,10 @@ MonoBehaviour:
     - {fileID: 371724155}
     - {fileID: 1219333939}
     newLabel: {fileID: 0}
-  iconWhip: {fileID: 0}
-  iconMagicWand: {fileID: 0}
-  iconFireWand: {fileID: 0}
-  iconKnife: {fileID: 0}
+  iconWhip: {fileID: 2860617688843079935, guid: fe5d1a766c1876a4cbe116ec4e4dca20, type: 3}
+  iconMagicWand: {fileID: 3236064843193608540, guid: 149a2c2cc219b5d44b258ede853ca26d, type: 3}
+  iconFireWand: {fileID: 6049585504189095545, guid: 5104829d5ac6daa4b98139610367bf4f, type: 3}
+  iconKnife: {fileID: 4823594791278819991, guid: 23b3c9ada7c08584fa3269c83a8dfd2e, type: 3}
   iconAxe: {fileID: 0}
   iconFireball: {fileID: 0}
   iconSpreadShot: {fileID: 0}

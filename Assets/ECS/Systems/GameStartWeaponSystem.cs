@@ -32,12 +32,12 @@ public partial struct GameStartWeaponSystem : ISystem
             SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
         var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
-        // FIX: Seed dari frame count + entity count + waktu
+        // FIX: Seed dari elapsed time + entity count + global system version
         // Hasilnya benar-benar berbeda setiap kali Play ditekan
         uint seed = (uint)(
             state.WorldUnmanaged.Time.ElapsedTime * 1000 +
             state.EntityManager.UniversalQuery.CalculateEntityCount() +
-            System.DateTime.Now.Millisecond +
+            state.GlobalSystemVersion +
             1); // +1 pastikan seed tidak pernah 0
 
         var rng = Unity.Mathematics.Random.CreateFromIndex(seed);

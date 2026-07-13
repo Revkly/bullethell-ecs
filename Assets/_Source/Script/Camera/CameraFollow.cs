@@ -55,6 +55,9 @@ public class CameraFollow : MonoBehaviour
 
     void OnDestroy()
     {
-        _playerQuery.Dispose();
+        if (World.DefaultGameObjectInjectionWorld != null && World.DefaultGameObjectInjectionWorld.IsCreated)
+        {
+            _playerQuery.Dispose();
+        }
     }
 }

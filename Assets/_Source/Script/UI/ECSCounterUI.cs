@@ -46,7 +46,10 @@ public class ECSCounterUI : MonoBehaviour
 
     void OnDestroy()
     {
-        _enemyQuery.Dispose();
-        // _allQuery adalah UniversalQuery milik EntityManager — jangan di-dispose
+        // Hindari NullReferenceException saat keluar dari Play Mode karena World sudah di-destroy duluan
+        if (World.DefaultGameObjectInjectionWorld != null && World.DefaultGameObjectInjectionWorld.IsCreated)
+        {
+            _enemyQuery.Dispose();
+        }
     }
 }
