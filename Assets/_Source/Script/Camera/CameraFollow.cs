@@ -6,9 +6,8 @@ using Unity.Mathematics;
 /// <summary>
 /// Kamera mengikuti player dengan smooth lerp.
 ///
-/// FIX: CreateEntityQuery() dipindah ke Awake — sebelumnya dipanggil
-/// berulang di LateUpdate() setiap frame sampai player ditemukan.
-/// Membuat query di dalam Update adalah alokasi yang tidak perlu.
+/// FIX: Lazy initialization — World dan Player dicari di LateUpdate
+/// agar tidak crash saat SubScene belum selesai load.
 /// </summary>
 public class CameraFollow : MonoBehaviour
 {
@@ -16,31 +15,32 @@ public class CameraFollow : MonoBehaviour
     public Vector3 offset     = new Vector3(0, 0, -10);
 
     private EntityManager _entityManager;
-    private EntityQuery   _playerQuery;
     private Entity        _playerEntity;
-    private bool          _playerFound;
-
-    void Awake()
-    {
-        _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-
-        // Buat query SEKALI di Awake, bukan berulang di LateUpdate
-        _playerQuery = _entityManager.CreateEntityQuery(
-            typeof(PlayerTag),
-            typeof(LocalTransform));
-    }
+    private bool          _initialized;
 
     void LateUpdate()
     {
-        if (!_playerFound)
-        {
-            if (_playerQuery.CalculateEntityCount() == 0) return;
+        if (World.DefaultGameObjectInjectionWorld == null || !World.DefaultGameObjectInjectionWorld.IsCreated)
+            return;
 
-            _playerEntity = _playerQuery.GetSingletonEntity();
-            _playerFound  = true;
+        if (!_initialized)
+        {
+            _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         }
 
-        if (!_entityManager.Exists(_playerEntity)) return;
+        // Lazy find player
+        if (!_initialized || !_entityManager.Exists(_playerEntity))
+        {
+            var query = _entityManager.CreateEntityQuery(typeof(PlayerTag), typeof(LocalTransform));
+            if (query.CalculateEntityCount() > 0)
+            {
+                _playerEntity = query.GetSingletonEntity();
+                _initialized = true;
+            }
+            query.Dispose();
+        }
+
+        if (!_initialized || !_entityManager.Exists(_playerEntity)) return;
 
         float3 playerPos = _entityManager
             .GetComponentData<LocalTransform>(_playerEntity).Position;
@@ -51,13 +51,5 @@ public class CameraFollow : MonoBehaviour
             transform.position,
             target,
             smoothSpeed * Time.deltaTime);
-    }
-
-    void OnDestroy()
-    {
-        if (World.DefaultGameObjectInjectionWorld != null && World.DefaultGameObjectInjectionWorld.IsCreated)
-        {
-            _playerQuery.Dispose();
-        }
     }
 }

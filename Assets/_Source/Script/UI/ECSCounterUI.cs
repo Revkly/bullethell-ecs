@@ -5,10 +5,8 @@ using Unity.Entities;
 /// <summary>
 /// Menampilkan jumlah enemy dan total entity di layar.
 ///
-/// FIX:
-/// - EntityQuery dibuat SEKALI di Start, bukan dibuat ulang tiap frame.
-/// - Update di-throttle setiap 0.1 detik — UI counter tidak perlu refresh 60fps.
-///   CalculateEntityCount() tiap frame bisa terasa saat ada 5000+ entity.
+/// FIX: Lazy initialization — World dan query dicari di Update
+/// agar tidak crash saat SubScene belum selesai load.
 /// </summary>
 public class ECSCounterUI : MonoBehaviour
 {
@@ -17,28 +15,29 @@ public class ECSCounterUI : MonoBehaviour
 
     private EntityManager _em;
     private EntityQuery   _enemyQuery;
-    private EntityQuery   _allQuery;
+    private bool          _initialized;
 
     private float _timer;
     private const float UPDATE_INTERVAL = 0.1f;
 
-    void Start()
-    {
-        _em = World.DefaultGameObjectInjectionWorld.EntityManager;
-
-        // Buat query sekali — jangan buat di Update
-        _enemyQuery = _em.CreateEntityQuery(typeof(EnemyTag));
-        _allQuery   = _em.UniversalQuery;
-    }
-
     void Update()
     {
+        if (World.DefaultGameObjectInjectionWorld == null || !World.DefaultGameObjectInjectionWorld.IsCreated)
+            return;
+
+        if (!_initialized)
+        {
+            _em = World.DefaultGameObjectInjectionWorld.EntityManager;
+            _enemyQuery = _em.CreateEntityQuery(typeof(EnemyTag));
+            _initialized = true;
+        }
+
         _timer += Time.deltaTime;
         if (_timer < UPDATE_INTERVAL) return;
         _timer = 0f;
 
         int enemyCount = _enemyQuery.CalculateEntityCount();
-        int totalCount = _allQuery.CalculateEntityCount();
+        int totalCount = _em.UniversalQuery.CalculateEntityCount();
 
         enemyText.text = "Enemy: "        + enemyCount;
         totalText.text = "Total Entity: " + totalCount;
@@ -46,8 +45,7 @@ public class ECSCounterUI : MonoBehaviour
 
     void OnDestroy()
     {
-        // Hindari NullReferenceException saat keluar dari Play Mode karena World sudah di-destroy duluan
-        if (World.DefaultGameObjectInjectionWorld != null && World.DefaultGameObjectInjectionWorld.IsCreated)
+        if (_initialized && World.DefaultGameObjectInjectionWorld != null && World.DefaultGameObjectInjectionWorld.IsCreated)
         {
             _enemyQuery.Dispose();
         }

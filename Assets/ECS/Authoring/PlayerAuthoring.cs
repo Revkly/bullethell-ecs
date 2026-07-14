@@ -52,7 +52,7 @@ public class PlayerAuthoring : MonoBehaviour
 
             AddComponent(entity, new ExpToNextLevel
             {
-                Value = 100
+                Value = 30
             });
 
             AddComponent(entity, new WeaponSlot

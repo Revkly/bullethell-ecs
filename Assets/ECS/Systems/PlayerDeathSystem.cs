@@ -24,8 +24,7 @@ public partial struct PlayerDeathSystem : ISystem
         {
             if (health.ValueRO.Current <= 0f)
             {
-                // Semua sistem ECS berhenti — scene reload ditangani MonoBehaviour
-                state.Enabled = false;
+                // GameOver ditangani MonoBehaviour
             }
         }
     }

@@ -3,7 +3,7 @@ using Unity.Entities;
 
 /// <summary>
 /// Shortcut keyboard untuk spawn massal enemy (testing/demo).
-/// 1 → 100 enemy, 2 → 1000 enemy, 3 → 5000 enemy.
+/// 1 → 100 enemy, 2 → 500 enemy, 3 → 1000 enemy.
 ///
 /// EnemyScale dibaca otomatis dari EnemySpawner singleton —
 /// tidak perlu hardcode di sini.
@@ -13,14 +13,19 @@ public class SpawnShortcutInput : MonoBehaviour
     [SerializeField] private int batchSize = 50;
 
     private EntityManager _em;
-
-    void Start()
-    {
-        _em = World.DefaultGameObjectInjectionWorld.EntityManager;
-    }
+    private bool _initialized;
 
     void Update()
     {
+        if (World.DefaultGameObjectInjectionWorld == null || !World.DefaultGameObjectInjectionWorld.IsCreated)
+            return;
+
+        if (!_initialized)
+        {
+            _em = World.DefaultGameObjectInjectionWorld.EntityManager;
+            _initialized = true;
+        }
+
         if (Input.GetKeyDown(KeyCode.Alpha1)) CreateRequest(100);
         if (Input.GetKeyDown(KeyCode.Alpha2)) CreateRequest(500);
         if (Input.GetKeyDown(KeyCode.Alpha3)) CreateRequest(1000);

@@ -1,25 +1,25 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Unity.Entities;
-using Unity.Transforms;
-using UnityEngine.UI;
 
-/// <summary>
-/// UI health bar yang mengikuti posisi player di layar.
-///
-/// FIX: Lazy find player di Update agar tidak crash jika SubScene
-/// belum selesai load saat Start() dipanggil.
-/// </summary>
-public class PlayerHealthUI : MonoBehaviour
+public class GameOverController : MonoBehaviour
 {
-    public Image  healthFill;
-    public Vector3 offset = new Vector3(0, -0.7f, 0);
-
+    public GameObject gameOverPanel;
     private EntityManager _em;
-    private Entity        _player;
-    private bool          _initialized;
+    private Entity _player;
+    private bool _isGameOver = false;
+    private bool _initialized = false;
+
+    void Start()
+    {
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(false);
+    }
 
     void Update()
     {
+        if (_isGameOver) return;
+
         if (World.DefaultGameObjectInjectionWorld == null || !World.DefaultGameObjectInjectionWorld.IsCreated)
             return;
 
@@ -42,11 +42,27 @@ public class PlayerHealthUI : MonoBehaviour
 
         if (!_initialized || !_em.Exists(_player)) return;
 
-        var t      = _em.GetComponentData<LocalTransform>(_player);
         var health = _em.GetComponentData<PlayerHealth>(_player);
+        if (health.Current <= 0f)
+        {
+            TriggerGameOver();
+        }
+    }
 
-        transform.position = new Vector3(t.Position.x, t.Position.y, 0f) + offset;
+    void TriggerGameOver()
+    {
+        _isGameOver = true;
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(true);
+    }
 
-        healthFill.fillAmount = Mathf.Clamp01(health.Current / health.Max);
+    public void RetryGame()
+    {
+        ECSWorldResetter.ResetAndLoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void LoadMainMenu()
+    {
+        ECSWorldResetter.ResetAndLoadScene("MainMenu");
     }
 }

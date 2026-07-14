@@ -6,25 +6,30 @@ public class GameTimeUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text timerText;
 
-    private EntityQuery gameTimeQuery;
     private EntityManager entityManager;
-
-    void Start()
-    {
-        entityManager =
-            World.DefaultGameObjectInjectionWorld.EntityManager;
-
-        gameTimeQuery =
-            entityManager.CreateEntityQuery(typeof(GameTime));
-    }
+    private bool _initialized;
 
     void Update()
     {
-        if (gameTimeQuery.IsEmpty)
+        if (World.DefaultGameObjectInjectionWorld == null || !World.DefaultGameObjectInjectionWorld.IsCreated)
             return;
 
-        GameTime gameTime =
-            gameTimeQuery.GetSingleton<GameTime>();
+        if (!_initialized)
+        {
+            entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+            _initialized = true;
+        }
+
+        var gameTimeQuery = entityManager.CreateEntityQuery(typeof(GameTime));
+
+        if (gameTimeQuery.IsEmpty)
+        {
+            gameTimeQuery.Dispose();
+            return;
+        }
+
+        GameTime gameTime = gameTimeQuery.GetSingleton<GameTime>();
+        gameTimeQuery.Dispose();
 
         float elapsed = gameTime.Elapsed;
 

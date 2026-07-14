@@ -10,15 +10,24 @@ public class InfiniteBackground : MonoBehaviour
     private EntityManager em;
     private Entity player;
     private bool playerFound = false;
+    private bool _initialized = false;
 
     void Start()
     {
         mat = GetComponent<MeshRenderer>().material;
-        em = World.DefaultGameObjectInjectionWorld.EntityManager;
     }
 
     void Update()
     {
+        if (World.DefaultGameObjectInjectionWorld == null || !World.DefaultGameObjectInjectionWorld.IsCreated)
+            return;
+
+        if (!_initialized)
+        {
+            em = World.DefaultGameObjectInjectionWorld.EntityManager;
+            _initialized = true;
+        }
+
         // cari player entity sekali saja
         if (!playerFound)
         {
@@ -29,6 +38,7 @@ public class InfiniteBackground : MonoBehaviour
                 player = query.GetSingletonEntity();
                 playerFound = true;
             }
+            query.Dispose();
             return;
         }
 

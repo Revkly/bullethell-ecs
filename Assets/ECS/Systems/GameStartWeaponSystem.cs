@@ -77,7 +77,5 @@ public partial struct GameStartWeaponSystem : ISystem
 
             ecb.AppendToBuffer(player, new OwnedWeapon { WeaponEntity = weapon });
         }
-
-        state.Enabled = false; // hanya sekali
     }
 }

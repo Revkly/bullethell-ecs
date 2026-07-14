@@ -12,9 +12,22 @@ using Unity.Burst;
 [BurstCompile]
 public partial struct PlayerDamageSystem : ISystem
 {
-    [BurstCompile]
+    public static bool IsGodMode = false;
+
     public void OnUpdate(ref SystemState state)
     {
+        // 🔹 CHEAT: God Mode Toggle (Tekan '0' sekali untuk On/Off)
+        if (UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.Alpha0))
+        {
+            IsGodMode = !IsGodMode;
+            UnityEngine.Debug.Log("God Mode Active: " + IsGodMode);
+        }
+
+        if (IsGodMode)
+        {
+            return; // Player kebal, tidak menerima damage
+        }
+
         float dt = SystemAPI.Time.DeltaTime;
 
         float3 playerPos = float3.zero;

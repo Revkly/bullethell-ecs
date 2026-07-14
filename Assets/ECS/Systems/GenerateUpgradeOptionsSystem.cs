@@ -14,6 +14,12 @@ using Unity.Mathematics;
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct GenerateUpgradeOptionsSystem : ISystem
 {
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<WeaponPoolElement>();
+        state.RequireForUpdate<PlayerTag>();
+    }
+
     public void OnUpdate(ref SystemState state)
     {
         var ecbSingleton =

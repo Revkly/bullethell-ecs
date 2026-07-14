@@ -32,16 +32,10 @@ public class UpgradeUI : MonoBehaviour
     private EntityManager _em;
     private Entity        _player;
     private bool          _isOpen;
+    private bool          _initialized;
 
     void Start()
     {
-        _em = World.DefaultGameObjectInjectionWorld.EntityManager;
-
-        var query = _em.CreateEntityQuery(typeof(PlayerTag));
-        if (query.CalculateEntityCount() > 0)
-            _player = query.GetSingletonEntity();
-        query.Dispose();
-
         panel.SetActive(false);
 
         cardA.button.onClick.AddListener(() => Select(0));
@@ -51,7 +45,27 @@ public class UpgradeUI : MonoBehaviour
 
     void Update()
     {
-        if (!_em.Exists(_player)) return;
+        if (World.DefaultGameObjectInjectionWorld == null || !World.DefaultGameObjectInjectionWorld.IsCreated)
+            return;
+
+        if (!_initialized)
+        {
+            _em = World.DefaultGameObjectInjectionWorld.EntityManager;
+        }
+
+        // Lazy find player — SubScene mungkin belum selesai load saat Start()
+        if (!_initialized || !_em.Exists(_player))
+        {
+            var query = _em.CreateEntityQuery(typeof(PlayerTag));
+            if (query.CalculateEntityCount() > 0)
+            {
+                _player = query.GetSingletonEntity();
+                _initialized = true;
+            }
+            query.Dispose();
+        }
+
+        if (!_initialized || !_em.Exists(_player)) return;
 
         bool hasUpgrade = _em.HasComponent<PendingUpgrade>(_player);
 
